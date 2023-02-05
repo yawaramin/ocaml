@@ -87,6 +87,7 @@ external set_trace: bool -> bool
     = "caml_set_parser_trace"
 
 let env =
+  begin[@alert "-exn"]
   { s_stack = Array.make 100 0;
     v_stack = Array.make 100 (Obj.repr ());
     symb_start_stack = Array.make 100 dummy_pos;
@@ -103,10 +104,12 @@ let env =
     sp = 0;
     state = 0;
     errflag = 0 }
+  end
 
 let grow_stacks() =
   let oldsize = env.stacksize in
   let newsize = oldsize * 2 in
+  begin[@alert "-exn"]
   let new_s = Array.make newsize 0
   and new_v = Array.make newsize (Obj.repr ())
   and new_start = Array.make newsize dummy_pos
@@ -120,9 +123,10 @@ let grow_stacks() =
     Array.blit env.symb_end_stack 0 new_end 0 oldsize;
     env.symb_end_stack <- new_end;
     env.stacksize <- newsize
+  end
 
 let clear_parser() =
-  Array.fill env.v_stack 0 env.stacksize (Obj.repr ());
+  (Array.fill[@alert "-exn"]) env.v_stack 0 env.stacksize (Obj.repr ());
   env.lval <- Obj.repr ()
 
 let current_lookahead_fun = ref (fun (_ : Obj.t) -> false)
@@ -136,10 +140,10 @@ let yyparse tables start lexer lexbuf =
         env.symb_end <- lexbuf.lex_curr_p;
         loop Token_read t
     | Raise_parse_error ->
-        raise Parse_error
+        (raise[@alert "-exn"]) Parse_error
     | Compute_semantic_action ->
         let (action, value) =
-          try
+          try[@alert "-exn"]
             (Semantic_action_computed, tables.actions.(env.rule_number) env)
           with Parse_error ->
             (Error_detected, Obj.repr ()) in
@@ -178,17 +182,17 @@ let yyparse tables start lexer lexbuf =
     | _ ->
         current_lookahead_fun :=
           (fun tok ->
-            if Obj.is_block tok
+            if[@alert "-exn"] Obj.is_block tok
             then tables.transl_block.(Obj.tag tok) = curr_char
             else tables.transl_const.(Obj.magic tok) = curr_char);
-        raise exn
+        (raise[@alert "-exn"]) exn
 
 let peek_val env n =
-  Obj.magic env.v_stack.(env.asp - n)
+  Obj.magic (env.v_stack.(env.asp - n)[@alert "-exn"])
 
 let symbol_start_pos () =
   let rec loop i =
-    if i <= 0 then env.symb_end_stack.(env.asp)
+    if[@alert "-exn"] i <= 0 then env.symb_end_stack.(env.asp)
     else begin
       let st = env.symb_start_stack.(env.asp - i + 1) in
       let en = env.symb_end_stack.(env.asp - i + 1) in
@@ -197,9 +201,9 @@ let symbol_start_pos () =
   in
   loop env.rule_len
 
-let symbol_end_pos () = env.symb_end_stack.(env.asp)
-let rhs_start_pos n = env.symb_start_stack.(env.asp - (env.rule_len - n))
-let rhs_end_pos n = env.symb_end_stack.(env.asp - (env.rule_len - n))
+let symbol_end_pos () = env.symb_end_stack.(env.asp)[@alert "-exn"]
+let rhs_start_pos n = env.symb_start_stack.(env.asp - (env.rule_len - n))[@alert "-exn"]
+let rhs_end_pos n = env.symb_end_stack.(env.asp - (env.rule_len - n))[@alert "-exn"]
 
 let symbol_start () = (symbol_start_pos ()).pos_cnum
 let symbol_end () = (symbol_end_pos ()).pos_cnum

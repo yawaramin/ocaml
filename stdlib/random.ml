@@ -60,22 +60,25 @@ module State = struct
   let to_binary_string s =
     let prefix = serialization_prefix in
     let preflen = serialization_prefix_len in
+    begin[@alert "-exn"]
     let buf = Bytes.create (preflen + 4 * 8) in
     Bytes.blit_string prefix 0 buf 0 preflen;
     for i = 0 to 3 do
       Bytes.set_int64_le buf (preflen + i * 8) (Array1.get s i)
     done;
     Bytes.unsafe_to_string buf
+    end
 
   let of_binary_string buf =
     let prefix = serialization_prefix in
     let preflen = serialization_prefix_len in
     if String.length buf <> preflen + 4 * 8
        || not (String.starts_with ~prefix buf)
-    then
+    then begin[@alert "-exn"]
       failwith
         ("Random.State.of_binary_string: expected a format \
-          compatible with OCaml " ^ Sys.ocaml_version);
+          compatible with OCaml " ^ Sys.ocaml_version)
+    end;
     let i1 = String.get_int64_le buf (preflen + 0 * 8) in
     let i2 = String.get_int64_le buf (preflen + 1 * 8) in
     let i3 = String.get_int64_le buf (preflen + 2 * 8) in
@@ -95,6 +98,7 @@ module State = struct
      we need 256 bits, so we hash twice with different suffixes. *)
   let reinit s seed =
     let n = Array.length seed in
+    begin[@alert "-exn"]
     let b = Bytes.create (n * 8 + 1) in
     for i = 0 to n-1 do
       Bytes.set_int64_le b (i * 8) (Int64.of_int seed.(i))
@@ -107,6 +111,7 @@ module State = struct
           (String.get_int64_le d1 8)
           (String.get_int64_le d2 0)
           (String.get_int64_le d2 8)
+    end
 
   let make seed =
     let s = create() in reinit s seed; s
@@ -121,24 +126,24 @@ module State = struct
   (* Return an integer between 0 (included) and [bound] (excluded) *)
   let rec intaux s n =
     let r = bits s in
-    let v = r mod n in
+    let v = begin[@alert "-exn"] r mod n end in
     if r - v > 0x3FFFFFFF - n + 1 then intaux s n else v
 
   let int s bound =
     if bound > 0x3FFFFFFF || bound <= 0
-    then invalid_arg "Random.int"
+    then (invalid_arg[@alert "-exn"]) "Random.int"
     else intaux s bound
 
   (* Return an integer between 0 (included) and [bound] (excluded).
      [bound] may be any positive [int]. *)
   let rec int63aux s n =
     let r = Int64.to_int (next s) land max_int in
-    let v = r mod n in
+    let v = begin[@alert "-exn"] r mod n end in
     if r - v > max_int - n + 1 then int63aux s n else v
 
   let full_int s bound =
     if bound <= 0 then
-      invalid_arg "Random.full_int"
+      (invalid_arg[@alert "-exn"]) "Random.full_int"
     else if bound > 0x3FFFFFFF then
       int63aux s bound
     else
@@ -151,14 +156,14 @@ module State = struct
   (* Return an [int32] between 0 (included) and [bound] (excluded). *)
   let rec int32aux s n =
     let r = Int32.shift_right_logical (bits32 s) 1 in
-    let v = Int32.rem r n in
+    let v = (Int32.rem[@alert "-exn"]) r n in
     if Int32.(sub r v > add (sub max_int n) 1l)
     then int32aux s n
     else v
 
   let int32 s bound =
     if bound <= 0l
-    then invalid_arg "Random.int32"
+    then (invalid_arg[@alert "-exn"]) "Random.int32"
     else int32aux s bound
 
   (* Return 64 random bits as an [int64] *)
@@ -175,7 +180,7 @@ module State = struct
 
   let int64 s bound =
     if bound <= 0L
-    then invalid_arg "Random.int64"
+    then (invalid_arg[@alert "-exn"]) "Random.int64"
     else int64aux s bound
 
   (* Return 32 or 64 random bits as a [nativeint] *)

@@ -100,7 +100,7 @@ let lex_refill read_fun aux_buffer lexbuf =
     then begin
       (* But there is enough space if we reclaim the junk at the beginning
          of the buffer *)
-      Bytes.blit lexbuf.lex_buffer lexbuf.lex_start_pos
+      (Bytes.blit[@alert "-exn"]) lexbuf.lex_buffer lexbuf.lex_start_pos
                   lexbuf.lex_buffer 0
                   (lexbuf.lex_buffer_len - lexbuf.lex_start_pos)
     end else begin
@@ -110,10 +110,10 @@ let lex_refill read_fun aux_buffer lexbuf =
       let newlen =
         Int.min (2 * Bytes.length lexbuf.lex_buffer) Sys.max_string_length in
       if lexbuf.lex_buffer_len - lexbuf.lex_start_pos + n > newlen
-      then failwith "Lexing.lex_refill: cannot grow buffer";
-      let newbuf = Bytes.create newlen in
+      then (failwith[@alert "-exn"]) "Lexing.lex_refill: cannot grow buffer";
+      let newbuf = (Bytes.create[@alert "-exn"]) newlen in
       (* Copy the valid data to the beginning of the new buffer *)
-      Bytes.blit lexbuf.lex_buffer lexbuf.lex_start_pos
+      (Bytes.blit[@alert "-exn"]) lexbuf.lex_buffer lexbuf.lex_start_pos
                   newbuf 0
                   (lexbuf.lex_buffer_len - lexbuf.lex_start_pos);
       lexbuf.lex_buffer <- newbuf
@@ -128,13 +128,15 @@ let lex_refill read_fun aux_buffer lexbuf =
     lexbuf.lex_buffer_len <- lexbuf.lex_buffer_len - s ;
     let t = lexbuf.lex_mem in
     for i = 0 to Array.length t-1 do
+      begin[@alert "-exn"]
       let v = t.(i) in
       if v >= 0 then
         t.(i) <- v-s
+      end
     done
   end;
   (* There is now enough space at the end of the buffer *)
-  Bytes.blit aux_buffer 0 lexbuf.lex_buffer lexbuf.lex_buffer_len n;
+  (Bytes.blit[@alert "-exn"]) aux_buffer 0 lexbuf.lex_buffer lexbuf.lex_buffer_len n;
   lexbuf.lex_buffer_len <- lexbuf.lex_buffer_len + n
 
 let zero_pos = {
@@ -145,8 +147,8 @@ let zero_pos = {
 }
 
 let from_function ?(with_positions = true) f =
-  { refill_buff = lex_refill f (Bytes.create 512);
-    lex_buffer = Bytes.create 1024;
+  { refill_buff = lex_refill f ((Bytes.create[@alert "-exn"]) 512);
+    lex_buffer = (Bytes.create[@alert "-exn"]) 1024;
     lex_buffer_len = 0;
     lex_abs_pos = 0;
     lex_start_pos = 0;
@@ -160,7 +162,7 @@ let from_function ?(with_positions = true) f =
   }
 
 let from_channel ?with_positions ic =
-  from_function ?with_positions (fun buf n -> input ic buf 0 n)
+  from_function ?with_positions (fun buf n -> (input[@alert "-exn"]) ic buf 0 n)
 
 let from_string ?(with_positions = true) s =
   { refill_buff = (fun lexbuf -> lexbuf.lex_eof_reached <- true);
@@ -203,17 +205,17 @@ let sub_lexeme_opt lexbuf i1 i2 =
     None
   end
 
-let sub_lexeme_char lexbuf i = Bytes.get lexbuf.lex_buffer i
+let sub_lexeme_char lexbuf i = (Bytes.get[@alert "-exn"]) lexbuf.lex_buffer i
 
 let sub_lexeme_char_opt lexbuf i =
   if i >= 0 then
-    Some (Bytes.get lexbuf.lex_buffer i)
+    Some ((Bytes.get[@alert "-exn"]) lexbuf.lex_buffer i)
   else
     None
 
 
 let lexeme_char lexbuf i =
-  Bytes.get lexbuf.lex_buffer (lexbuf.lex_start_pos + i)
+  (Bytes.get[@alert "-exn"]) lexbuf.lex_buffer (lexbuf.lex_start_pos + i)
 
 let lexeme_start lexbuf = lexbuf.lex_start_p.pos_cnum
 let lexeme_end lexbuf = lexbuf.lex_curr_p.pos_cnum

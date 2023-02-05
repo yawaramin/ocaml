@@ -63,12 +63,11 @@ exception Undefined
 *)
 
 external force : 'a t -> 'a = "%lazy_force"
+[@@alert exn "Undefined (see {!Undefined})"]
 (** [force x] forces the suspension [x] and returns its result. If [x] has
     already been forced, [Lazy.force x] returns the same value again without
     recomputing it.  If it raised an exception, the same exception is raised
     again.
-
-    @raise Undefined (see {!Undefined}).
 *)
 
 (** {1 Iterators} *)
@@ -128,14 +127,11 @@ val from_fun : (unit -> 'a) -> 'a t
     @since 4.00 *)
 
 val force_val : 'a t -> 'a
+[@@alert exn "Undefined if the forcing of [x] tries to force [x] itself recursively"]
 (** [force_val x] forces the suspension [x] and returns its result.  If [x]
     has already been forced, [force_val x] returns the same value again
     without recomputing it.
 
     If the computation of [x] raises an exception, it is unspecified
     whether [force_val x] raises the same exception or {!Undefined}.
-    @raise Undefined if the forcing of [x] tries to force [x] itself
-    recursively.
-
-    @raise Undefined (see {!Undefined}).
 *)

@@ -21,14 +21,16 @@ open CamlinternalFormatBasics
 type mutable_char_set = bytes
 
 (* Create a fresh, empty, mutable char set. *)
-let create_char_set () = Bytes.make 32 '\000'
+let create_char_set () = (Bytes.make[@alert "-exn"]) 32 '\000'
 
 (* Add a char in a mutable char set. *)
 let add_in_char_set char_set c =
   let ind = int_of_char c in
   let str_ind = ind lsr 3 and mask = 1 lsl (ind land 0b111) in
+  begin[@alert "-exn"]
   Bytes.set char_set str_ind
     (char_of_int (int_of_char (Bytes.get char_set str_ind) lor mask))
+  end
 
 let freeze_char_set char_set =
   Bytes.to_string char_set
@@ -37,8 +39,10 @@ let freeze_char_set char_set =
 let rev_char_set char_set =
   let char_set' = create_char_set () in
   for i = 0 to 31 do
+    begin[@alert "-exn"]
     Bytes.set char_set' i
-      (char_of_int (int_of_char (String.get char_set i) lxor 0xFF));
+      (char_of_int (int_of_char (String.get char_set i) lxor 0xFF))
+    end
   done;
   Bytes.unsafe_to_string char_set'
 
@@ -46,7 +50,9 @@ let rev_char_set char_set =
 let is_in_char_set char_set c =
   let ind = int_of_char c in
   let str_ind = ind lsr 3 and mask = 1 lsl (ind land 0b111) in
+  begin[@alert "-exn"]
   (int_of_char (String.get char_set str_ind) land mask) <> 0
+  end
 
 
 (******************************************************************************)
@@ -253,30 +259,30 @@ type buffer = {
 }
 
 (* Create a fresh buffer. *)
-let buffer_create init_size = { ind = 0; bytes = Bytes.create init_size }
+let buffer_create init_size = { ind = 0; bytes = (Bytes.create[@alert "-exn"]) init_size }
 
 (* Check size of the buffer and grow it if needed. *)
 let buffer_check_size buf overhead =
   let len = Bytes.length buf.bytes in
   let min_len = buf.ind + overhead in
-  if min_len > len then (
+  if min_len > len then begin[@alert "-exn"]
     let new_len = Int.max (len * 2) min_len in
     let new_str = Bytes.create new_len in
     Bytes.blit buf.bytes 0 new_str 0 len;
     buf.bytes <- new_str;
-  )
+  end
 
 (* Add the character `c' to the buffer `buf'. *)
 let buffer_add_char buf c =
   buffer_check_size buf 1;
-  Bytes.set buf.bytes buf.ind c;
+  (Bytes.set[@alert "-exn"]) buf.bytes buf.ind c;
   buf.ind <- buf.ind + 1
 
 (* Add the string `s' to the buffer `buf'. *)
 let buffer_add_string buf s =
   let str_len = String.length s in
   buffer_check_size buf str_len;
-  String.blit s 0 buf.bytes buf.ind str_len;
+  (String.blit[@alert "-exn"]) s 0 buf.bytes buf.ind str_len;
   buf.ind <- buf.ind + str_len
 
 (* Get the content of the buffer. *)
@@ -311,6 +317,7 @@ let char_of_counter counter = match counter with
 
 (* Print a char_set in a buffer with the OCaml format lexical convention. *)
 let bprint_char_set buf char_set =
+  begin[@alert "-exn"]
   let rec print_start set =
     let is_alone c =
       let before, after = Char.(chr (code c - 1), chr (code c + 1)) in
@@ -367,6 +374,7 @@ let bprint_char_set buf char_set =
     else char_set
   );
   buffer_add_char buf ']'
+  end
 
 (***)
 
@@ -472,7 +480,7 @@ let string_of_formatting_lit formatting_lit = match formatting_lit with
   | Magic_size (str, _)  -> str
   | Escaped_at           -> "@@"
   | Escaped_percent      -> "@%"
-  | Scan_indic c -> "@" ^ (String.make 1 c)
+  | Scan_indic c -> begin[@alert "-exn"] "@" ^ (String.make 1 c) end
 
 (***)
 
@@ -484,7 +492,7 @@ let bprint_char_literal buf chr = match chr with
 (* Print a literal string in a buffer, escape all '%' by "%%". *)
 let bprint_string_literal buf str =
   for i = 0 to String.length str - 1 do
-    bprint_char_literal buf str.[i]
+    bprint_char_literal buf str.[i][@alert "-exn"]
   done
 
 (******************************************************************************)
@@ -978,7 +986,7 @@ fun pad fmtty -> match pad, fmtty with
   | No_padding, _ -> Padding_fmtty_EBB (No_padding, fmtty)
   | Lit_padding (padty, w), _ -> Padding_fmtty_EBB (Lit_padding (padty,w),fmtty)
   | Arg_padding padty, Int_ty rest -> Padding_fmtty_EBB (Arg_padding padty,rest)
-  | _ -> raise Type_mismatch
+  | _ -> (raise[@alert "-exn"]) Type_mismatch
 
 (* Convert a (upadding, uprecision) to a (padding, precision). *)
 (* Take one or two Int_ty from the fmtty if needed. *)
@@ -993,7 +1001,7 @@ fun pad prec fmtty -> match prec, type_padding pad fmtty with
     Padprec_fmtty_EBB (pad, Lit_precision p, rest)
   | Arg_precision, Padding_fmtty_EBB (pad, Int_ty rest) ->
     Padprec_fmtty_EBB (pad, Arg_precision, rest)
-  | _, Padding_fmtty_EBB (_, _) -> raise Type_mismatch
+  | _, Padding_fmtty_EBB (_, _) -> (raise[@alert "-exn"]) Type_mismatch
 
 (* Type a format according to an fmtty. *)
 (* If typing succeed, generate a copy of the format with the same
@@ -1007,7 +1015,7 @@ let rec type_format :
   -> (a2, b2, c2, d2, e2, f2) fmt
 = fun fmt fmtty -> match type_format_gen fmt fmtty with
   | Fmt_fmtty_EBB (fmt', End_of_fmtty) -> fmt'
-  | _ -> raise Type_mismatch
+  | _ -> (raise[@alert "-exn"]) Type_mismatch
 
 and type_format_gen :
   type a1 b1 c1 d1 e1 f1
@@ -1015,7 +1023,7 @@ and type_format_gen :
      (a1, b1, c1, d1, e1, f1) fmt
   -> (a2, b2, c2, d2, e2, f2) fmtty
   -> (a2, b2, c2, d2, e2, f2) fmt_fmtty_ebb
-= fun fmt fmtty -> match fmt, fmtty with
+= fun fmt fmtty -> match[@alert "-exn"] fmt, fmtty with
   | Char fmt_rest, Char_ty fmtty_rest ->
     let Fmt_fmtty_EBB (fmt', fmtty') = type_format_gen fmt_rest fmtty_rest in
     Fmt_fmtty_EBB (Char fmt', fmtty')
@@ -1182,7 +1190,7 @@ fun ign fmt fmtty -> match ign with
     | Ignored_reader_ty fmtty_rest ->
       let Fmt_fmtty_EBB (fmt', fmtty') = type_format_gen fmt fmtty_rest in
       Fmt_fmtty_EBB (Ignored_param (Ignored_reader, fmt'), fmtty')
-    | _ -> raise Type_mismatch
+    | _ -> (raise[@alert "-exn"]) Type_mismatch
   )
 
 and type_ignored_param_one : type a1 a2 b1 b2 c1 c2 d1 d2 e1 e2 f1 f2 .
@@ -1199,7 +1207,7 @@ and type_ignored_format_substitution : type w x y z p s t u a b c d e f .
     (w, x, y, z, s, p) fmtty ->
     (p, x, y, s, t, u) fmt ->
     (a, b, c, d, e, f) fmtty -> (a, b, c, d, e, f) fmtty_fmt_ebb =
-fun sub_fmtty fmt fmtty -> match sub_fmtty, fmtty with
+fun sub_fmtty fmt fmtty -> match[@alert "-exn"] sub_fmtty, fmtty with
   | Char_ty sub_fmtty_rest, Char_ty fmtty_rest ->
     let Fmtty_fmt_EBB (sub_fmtty_rest', fmt') =
       type_ignored_format_substitution sub_fmtty_rest fmt fmtty_rest in
@@ -1329,7 +1337,7 @@ let fix_padding padty width str =
        - we could only signal this issue by failing at runtime,
          which is not very nice... *)
     if width < 0 then Left else padty in
-  if width <= len then str else
+  if[@alert "-exn"] width <= len then str else
     let res = Bytes.make width (if padty = Zeros then '0' else ' ') in
     begin match padty with
     | Left  -> String.blit str 0 res 0 len
@@ -1349,7 +1357,7 @@ let fix_padding padty width str =
 let fix_int_precision prec str =
   let prec = abs prec in
   let len = String.length str in
-  match str.[0] with
+  match[@alert "-exn"] str.[0] with
   | ('+' | '-' | ' ') as c when prec + 1 > len ->
     let res = Bytes.make (prec + 1) '0' in
     Bytes.set res 0 c;
@@ -1369,11 +1377,13 @@ let fix_int_precision prec str =
 
 (* Escape a string according to the OCaml lexing convention. *)
 let string_to_caml_string str =
+  begin[@alert "-exn"]
   let str = String.escaped str in
   let l = String.length str in
   let res = Bytes.make (l + 2) '\"' in
   String.unsafe_blit str 0 res 1 l;
   Bytes.unsafe_to_string res
+  end
 
 (* Generate the format_int/int32/nativeint/int64 first argument
    from an int_conv. *)
@@ -1433,6 +1443,7 @@ let transform_int_alt iconv s =
       done;
       !n
     in
+    begin[@alert "-exn"]
     let buf = Bytes.create (String.length s + (digits - 1) / 3) in
     let pos = ref 0 in
     let put c = Bytes.set buf !pos c; incr pos in
@@ -1444,6 +1455,7 @@ let transform_int_alt iconv s =
       | c -> put c
     done;
     Bytes.unsafe_to_string buf
+    end
   | _ -> s
 
 (* Convert an integer to a string according to a conversion. *)
@@ -1470,10 +1482,10 @@ let convert_float fconv prec x =
     let len = String.length str in
     let rec is_valid i =
       if i = len then false else
-        match str.[i] with
+        match str.[i][@alert "-exn"] with
         | '.' | 'e' | 'E' -> true
         | _ -> is_valid (i + 1) in
-    if is_valid 0 then str else str ^ "." in
+    if is_valid 0 then str else begin[@alert "-exn"] str ^ "." end in
   let caml_special_val str = match classify_float x with
     | FP_normal | FP_subnormal | FP_zero -> str
     | FP_infinite -> if x < 0.0 then "neg_infinity" else "infinity"
@@ -1492,7 +1504,7 @@ let convert_float fconv prec x =
 let format_caml_char c =
   let str = Char.escaped c in
   let l = String.length str in
-  let res = Bytes.make (l + 2) '\'' in
+  let res = (Bytes.make[@alert "-exn"]) (l + 2) '\'' in
   String.unsafe_blit str 0 res 1 l;
   Bytes.unsafe_to_string res
 
@@ -1894,7 +1906,7 @@ and fn_of_custom_arity : type x y a b c d e f state.
 (* Recursively output an "accumulator" containing a reversed list of
    printing entities (string, char, flus, ...) in an output_stream. *)
 (* Used as a continuation of make_printf. *)
-let rec output_acc o acc = match acc with
+let rec output_acc o acc = match[@alert "-exn"] acc with
   | Acc_formatting_lit (p, fmting_lit) ->
     let s = string_of_formatting_lit fmting_lit in
     output_acc o p; output_string o s;
@@ -1914,7 +1926,7 @@ let rec output_acc o acc = match acc with
 (* Recursively output an "accumulator" containing a reversed list of
    printing entities (string, char, flus, ...) in a buffer. *)
 (* Used as a continuation of make_printf. *)
-let rec bufput_acc b acc = match acc with
+let rec bufput_acc b acc = match[@alert "-exn"] acc with
   | Acc_formatting_lit (p, fmting_lit) ->
     let s = string_of_formatting_lit fmting_lit in
     bufput_acc b p; Buffer.add_string b s;
@@ -1935,7 +1947,7 @@ let rec bufput_acc b acc = match acc with
    printing entities (string, char, flus, ...) in a buffer. *)
 (* Differ from bufput_acc by the interpretation of %a and %t. *)
 (* Used as a continuation of make_printf. *)
-let rec strput_acc b acc = match acc with
+let rec strput_acc b acc = match[@alert "-exn"] acc with
   | Acc_formatting_lit (p, fmting_lit) ->
     let s = string_of_formatting_lit fmting_lit in
     strput_acc b p; Buffer.add_string b s;
@@ -1958,7 +1970,7 @@ let rec strput_acc b acc = match acc with
 (* Raise [Failure] with a pretty-printed error message. *)
 let failwith_message (Format (fmt, _)) =
   let buf = Buffer.create 256 in
-  let k acc = strput_acc buf acc; failwith (Buffer.contents buf) in
+  let k acc = strput_acc buf acc; (failwith[@alert "-exn"]) (Buffer.contents buf) in
   make_printf k End_of_acc fmt
 
 (******************************************************************************)
@@ -1966,7 +1978,7 @@ let failwith_message (Format (fmt, _)) =
 
 (* Convert a string to an open block description (indent, block_type) *)
 let open_box_of_string str =
-  if str = "" then (0, Pp_box) else
+  if[@alert "-exn"] str = "" then (0, Pp_box) else
     let len = String.length str in
     let invalid_box () = failwith_message "invalid box description %S" str in
     let rec parse_spaces i =
@@ -2122,7 +2134,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
   and parse_literal : type e f . int -> int -> int -> (_, _, e, f) fmt_ebb =
   fun lit_start str_ind end_ind ->
     if str_ind = end_ind then add_literal lit_start str_ind End_of_format else
-      match str.[str_ind] with
+      match str.[str_ind][@alert "-exn"] with
       | '%' ->
         let Fmt_EBB fmt_rest = parse_format str_ind end_ind in
         add_literal lit_start str_ind fmt_rest
@@ -2139,7 +2151,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
   and parse_ign : type e f . int -> int -> int -> (_, _, e, f) fmt_ebb =
   fun pct_ind str_ind end_ind ->
     if str_ind = end_ind then unexpected_end_of_format end_ind;
-    match str.[str_ind] with
+    match str.[str_ind][@alert "-exn"] with
       | '_' -> parse_flags pct_ind (str_ind+1) end_ind true
       | _ -> parse_flags pct_ind str_ind end_ind false
 
@@ -2154,12 +2166,12 @@ let fmt_ebb_of_string ?legacy_behavior str =
       if !flag && not legacy_behavior then
         failwith_message
           "invalid format %S: at character number %d, duplicate flag %C"
-          str str_ind str.[str_ind];
+          str str_ind str.[str_ind][@alert "-exn"];
       flag := true;
     in
     let rec read_flags str_ind =
       if str_ind = end_ind then unexpected_end_of_format end_ind;
-      begin match str.[str_ind] with
+      begin match str.[str_ind][@alert "-exn"] with
       | '0' -> set_flag str_ind zero;  read_flags (str_ind + 1)
       | '-' -> set_flag str_ind minus; read_flags (str_ind + 1)
       | '+' -> set_flag str_ind plus;  read_flags (str_ind + 1)
@@ -2185,7 +2197,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
       |  true, true  ->
         if legacy_behavior then Left
         else incompatible_flag pct_ind str_ind '-' "0" in
-    match str.[str_ind] with
+    match str.[str_ind][@alert "-exn"] with
     | '0' .. '9' ->
       let new_ind, width = parse_positive str_ind end_ind 0 in
       parse_after_padding pct_ind new_ind end_ind minus plus hash space ign
@@ -2217,7 +2229,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
         (x, _) padding -> (_, _, e, f) fmt_ebb =
   fun pct_ind str_ind end_ind minus plus hash space ign pad ->
     if str_ind = end_ind then unexpected_end_of_format end_ind;
-    match str.[str_ind] with
+    match str.[str_ind][@alert "-exn"] with
     | '.' ->
       parse_precision pct_ind (str_ind + 1) end_ind minus plus hash space ign
         pad
@@ -2235,7 +2247,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
       let new_ind, prec = parse_positive str_ind end_ind 0 in
       parse_after_precision pct_ind new_ind end_ind minus plus hash space ign
         pad (Lit_precision prec) in
-    match str.[str_ind] with
+    match str.[str_ind][@alert "-exn"] with
     | '0' .. '9' -> parse_literal minus str_ind
     | ('+' | '-') as symb when legacy_behavior ->
       (* Legacy mode would accept and ignore '+' or '-' before the
@@ -2268,7 +2280,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
     if str_ind = end_ind then unexpected_end_of_format end_ind;
     let parse_conv (type u) (type v) (padprec : (u, v) padding) =
       parse_conversion pct_ind (str_ind + 1) end_ind plus hash space ign pad
-        prec padprec str.[str_ind] in
+        prec padprec str.[str_ind][@alert "-exn"] in
     (* in legacy mode, some formats (%s and %S) accept a weird mix of
        padding and precision, which is merged as a single padding
        information. For example, in %.10s the precision is implicitly
@@ -2435,7 +2447,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
         Fmt_EBB (Ignored_param (ignored, fmt_rest))
       else
         Fmt_EBB (Scan_get_counter (counter, fmt_rest))
-    | 'l' | 'n' | 'L' when str_ind=end_ind || not (is_int_base str.[str_ind]) ->
+    | 'l' | 'n' | 'L' when str_ind=end_ind || not (is_int_base str.[str_ind][@alert "-exn"]) ->
       let Fmt_EBB fmt_rest = parse str_ind end_ind in
       let counter = counter_of_char symb in
       if get_ign () then
@@ -2446,7 +2458,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
     | 'l' ->
       let iconv =
         compute_int_conv pct_ind (str_ind + 1) (get_plus ()) (get_hash ())
-          (get_space ()) str.[str_ind] in
+          (get_space ()) str.[str_ind][@alert "-exn"] in
       let Fmt_EBB fmt_rest = parse (str_ind + 1) end_ind in
       if get_ign () then
         let ignored = Ignored_int32 (iconv, get_pad_opt '_') in
@@ -2458,7 +2470,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
     | 'n' ->
       let iconv =
         compute_int_conv pct_ind (str_ind + 1) (get_plus ())
-          (get_hash ()) (get_space ()) str.[str_ind] in
+          (get_hash ()) (get_space ()) str.[str_ind][@alert "-exn"] in
       let Fmt_EBB fmt_rest = parse (str_ind + 1) end_ind in
       if get_ign () then
         let ignored = Ignored_nativeint (iconv, get_pad_opt '_') in
@@ -2470,7 +2482,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
     | 'L' ->
       let iconv =
         compute_int_conv pct_ind (str_ind + 1) (get_plus ()) (get_hash ())
-          (get_space ()) str.[str_ind] in
+          (get_space ()) str.[str_ind][@alert "-exn"] in
       let Fmt_EBB fmt_rest = parse (str_ind + 1) end_ind in
       if get_ign () then
         let ignored = Ignored_int64 (iconv, get_pad_opt '_') in
@@ -2590,7 +2602,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
   fun str_ind end_ind ->
     if str_ind = end_ind then Fmt_EBB (Char_literal ('@', End_of_format))
     else
-      match str.[str_ind] with
+      match str.[str_ind][@alert "-exn"] with
       | '[' ->
         parse_tag false (str_ind + 1) end_ind
       | ']' ->
@@ -2623,7 +2635,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
       | '@' ->
         let Fmt_EBB fmt_rest = parse (str_ind + 1) end_ind in
         Fmt_EBB (Formatting_lit (Escaped_at, fmt_rest))
-      | '%' when str_ind + 1 < end_ind && str.[str_ind + 1] = '%' ->
+      | '%' when str_ind + 1 < end_ind && str.[str_ind + 1][@alert "-exn"] = '%' ->
         let Fmt_EBB fmt_rest = parse (str_ind + 2) end_ind in
         Fmt_EBB (Formatting_lit (Escaped_percent, fmt_rest))
       | '%' ->
@@ -2636,7 +2648,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
   (* Try to read the optional <name> after "@{" or "@[". *)
   and parse_tag : type e f . bool -> int -> int -> (_, _, e, f) fmt_ebb =
   fun is_open_tag str_ind end_ind ->
-    try
+    try[@alert "-exn"]
       if str_ind = end_ind then raise Not_found;
       match str.[str_ind] with
       | '<' ->
@@ -2662,7 +2674,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
   and parse_good_break : type e f . int -> int -> (_, _, e, f) fmt_ebb =
   fun str_ind end_ind ->
     let next_ind, formatting_lit =
-      try
+      try[@alert "-exn"]
         if str_ind = end_ind || str.[str_ind] <> '<' then raise Not_found;
         let str_ind_1 = parse_spaces (str_ind + 1) end_ind in
         match str.[str_ind_1] with
@@ -2694,7 +2706,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
     match
       try
         let str_ind_1 = parse_spaces str_ind end_ind in
-        match str.[str_ind_1] with
+        match[@alert "-exn"] str.[str_ind_1] with
         | '0' .. '9' | '-' ->
           let str_ind_2, size = parse_integer str_ind_1 end_ind in
           let str_ind_3 = parse_spaces str_ind_2 end_ind in
@@ -2722,7 +2734,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
     in
     let add_range c c' =
       for i = int_of_char c to int_of_char c' do
-        add_in_char_set char_set (char_of_int i);
+        add_in_char_set char_set ((char_of_int[@alert "-exn"]) i);
       done;
     in
 
@@ -2735,13 +2747,13 @@ let fmt_ebb_of_string ?legacy_behavior str =
     (* Parse the first character of a char set. *)
     let rec parse_char_set_start str_ind end_ind =
       if str_ind = end_ind then unexpected_end_of_format end_ind;
-      let c = str.[str_ind] in
+      let c = str.[str_ind][@alert "-exn"] in
       parse_char_set_after_char (str_ind + 1) end_ind c
 
     (* Parse the content of a char set until the first ']'. *)
     and parse_char_set_content str_ind end_ind =
       if str_ind = end_ind then unexpected_end_of_format end_ind;
-      match str.[str_ind] with
+      match str.[str_ind][@alert "-exn"] with
       | ']' ->
         str_ind + 1
       | '-' ->
@@ -2753,7 +2765,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
     (* Test for range in char set. *)
     and parse_char_set_after_char str_ind end_ind c =
       if str_ind = end_ind then unexpected_end_of_format end_ind;
-      match str.[str_ind] with
+      match str.[str_ind][@alert "-exn"] with
       | ']' ->
         add_char c;
         str_ind + 1
@@ -2773,14 +2785,14 @@ let fmt_ebb_of_string ?legacy_behavior str =
     (* Manage range in char set (except if the '-' the last char before ']') *)
     and parse_char_set_after_minus str_ind end_ind c =
       if str_ind = end_ind then unexpected_end_of_format end_ind;
-      match str.[str_ind] with
+      match str.[str_ind][@alert "-exn"] with
       | ']' ->
         add_char c;
         add_char '-';
         str_ind + 1
       | '%' ->
         if str_ind + 1 = end_ind then unexpected_end_of_format end_ind;
-        begin match str.[str_ind + 1] with
+        begin match str.[str_ind + 1][@alert "-exn"] with
           | ('%' | '@') as c' ->
             add_range c c';
             parse_char_set_content (str_ind + 2) end_ind
@@ -2792,7 +2804,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
     in
     let str_ind, reverse =
       if str_ind = end_ind then unexpected_end_of_format end_ind;
-      match str.[str_ind] with
+      match str.[str_ind][@alert "-exn"] with
         | '^' -> str_ind + 1, true
         | _ -> str_ind, false in
     let next_ind = parse_char_set_start str_ind end_ind in
@@ -2802,13 +2814,13 @@ let fmt_ebb_of_string ?legacy_behavior str =
   (* Consume all next spaces, raise an Failure if end_ind is reached. *)
   and parse_spaces str_ind end_ind =
     if str_ind = end_ind then unexpected_end_of_format end_ind;
-    if str.[str_ind] = ' ' then parse_spaces (str_ind + 1) end_ind else str_ind
+    if str.[str_ind][@alert "-exn"] = ' ' then parse_spaces (str_ind + 1) end_ind else str_ind
 
   (* Read a positive integer from the string, raise a Failure if end_ind is
      reached. *)
   and parse_positive str_ind end_ind acc =
     if str_ind = end_ind then unexpected_end_of_format end_ind;
-    match str.[str_ind] with
+    match str.[str_ind][@alert "-exn"] with
     | '0' .. '9' as c ->
       let new_acc = acc * 10 + (int_of_char c - int_of_char '0') in
       if new_acc > Sys.max_string_length then
@@ -2823,11 +2835,11 @@ let fmt_ebb_of_string ?legacy_behavior str =
      if end_ind is reached. *)
   and parse_integer str_ind end_ind =
     if str_ind = end_ind then unexpected_end_of_format end_ind;
-    match str.[str_ind] with
+    match str.[str_ind][@alert "-exn"] with
     | '0' .. '9' -> parse_positive str_ind end_ind 0
     | '-' -> (
       if str_ind + 1 = end_ind then unexpected_end_of_format end_ind;
-      match str.[str_ind + 1] with
+      match str.[str_ind + 1][@alert "-exn"] with
       | '0' .. '9' ->
         let next_ind, n = parse_positive (str_ind + 1) end_ind 0 in
         next_ind, -n
@@ -2840,7 +2852,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
   and add_literal : type a d e f .
       int -> int -> (a, _, _, d, e, f) fmt ->
       (_, _, e, f) fmt_ebb =
-  fun lit_start str_ind fmt -> match str_ind - lit_start with
+  fun lit_start str_ind fmt -> match[@alert "-exn"] str_ind - lit_start with
     | 0    -> Fmt_EBB fmt
     | 1    -> Fmt_EBB (Char_literal (str.[lit_start], fmt))
     | size -> Fmt_EBB (String_literal (String.sub str lit_start size, fmt))
@@ -2852,7 +2864,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
       failwith_message
         "invalid format %S: unclosed sub-format, \
          expected \"%%%c\" at character number %d" str c end_ind;
-    match str.[str_ind] with
+    match[@alert "-exn"] str.[str_ind] with
     | '%' ->
       if str_ind + 1 = end_ind then unexpected_end_of_format end_ind;
       if str.[str_ind + 1] = c then (* End of format found *) str_ind else
@@ -2960,7 +2972,7 @@ let fmt_ebb_of_string ?legacy_behavior str =
   (* Raise [Failure] with a friendly error message about incompatible options.*)
   and incompatible_flag : type a . int -> int -> char -> string -> a =
     fun pct_ind str_ind symb option ->
-      let subfmt = String.sub str pct_ind (str_ind - pct_ind) in
+      let subfmt = (String.sub[@alert "-exn"]) str pct_ind (str_ind - pct_ind) in
       failwith_message
         "invalid format %S: at character number %d, \
          %s is incompatible with '%c' in sub-format %S"

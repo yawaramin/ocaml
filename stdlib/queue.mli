@@ -49,8 +49,8 @@ val push : 'a -> 'a t -> unit
 (** [push] is a synonym for [add]. *)
 
 val take : 'a t -> 'a
-(** [take q] removes and returns the first element in queue [q],
-   or raises {!Empty} if the queue is empty. *)
+[@@alert exn "Empty if the queue is empty"]
+(** [take q] removes and returns the first element in queue [q]. *)
 
 val take_opt : 'a t -> 'a option
 (** [take_opt q] removes and returns the first element in queue [q],
@@ -58,11 +58,13 @@ val take_opt : 'a t -> 'a option
    @since 4.08 *)
 
 val pop : 'a t -> 'a
+[@@alert exn "Empty if the queue is empty"]
 (** [pop] is a synonym for [take]. *)
 
 val peek : 'a t -> 'a
+[@@alert exn "Empty if the queue is empty"]
 (** [peek q] returns the first element in queue [q], without removing
-   it from the queue, or raises {!Empty} if the queue is empty. *)
+   it from the queue. *)
 
 val peek_opt : 'a t -> 'a option
 (** [peek_opt q] returns the first element in queue [q], without removing
@@ -70,6 +72,7 @@ val peek_opt : 'a t -> 'a option
    @since 4.08 *)
 
 val top : 'a t -> 'a
+[@@alert exn "Empty if the queue is empty"]
 (** [top] is a synonym for [peek]. *)
 
 val clear : 'a t -> unit

@@ -172,6 +172,7 @@ external to_int : float -> int = "%intoffloat"
     range of representable integers. *)
 
 external of_string : string -> float = "caml_float_of_string"
+[@@alert exn "Failure if the given string is not a valid representation of a float"]
 (** Convert the given string to a float.  The string is read in decimal
     (by default) or in hexadecimal (marked by [0x] or [0X]).
     The format of decimal floating-point numbers is
@@ -184,9 +185,7 @@ external of_string : string -> float = "caml_float_of_string"
     The [_] (underscore) character can appear anywhere in the string
     and is ignored.
     Depending on the execution platforms, other representations of
-    floating-point numbers can be accepted, but should not be relied upon.
-    @raise Failure if the given string is not a valid
-    representation of a float. *)
+    floating-point numbers can be accepted, but should not be relied upon. *)
 
 val of_string_opt: string -> float option
 (** Same as [of_string], but returns [None] instead of raising. *)
@@ -507,78 +506,70 @@ module Array : sig
   (** Return the length (number of elements) of the given floatarray. *)
 
   val get : t -> int -> float
-  (** [get a n] returns the element number [n] of floatarray [a].
-      @raise Invalid_argument if [n] is outside the range 0 to
-      [(length a - 1)]. *)
+  [@@alert exn "Invalid_argument if [n] is outside the range 0 to [(length a - 1)]"]
+  (** [get a n] returns the element number [n] of floatarray [a]. *)
 
   val set : t -> int -> float -> unit
+  [@@alert exn "Invalid_argument if [n] is outside the range 0 to [(length a - 1)]"]
   (** [set a n x] modifies floatarray [a] in place, replacing element
-      number [n] with [x].
-      @raise Invalid_argument if [n] is outside the range 0 to
-      [(length a - 1)]. *)
+      number [n] with [x]. *)
 
   val make : int -> float -> t
-  (** [make n x] returns a fresh floatarray of length [n], initialized with [x].
-      @raise Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]. *)
+  [@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]"]
+  (** [make n x] returns a fresh floatarray of length [n], initialized with [x]. *)
 
   val create : int -> t
+  [@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]"]
   (** [create n] returns a fresh floatarray of length [n],
-      with uninitialized data.
-      @raise Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]. *)
+      with uninitialized data. *)
 
   val init : int -> (int -> float) -> t
+  [@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]"]
   (** [init n f] returns a fresh floatarray of length [n],
       with element number [i] initialized to the result of [f i].
       In other terms, [init n f] tabulates the results of [f]
-      applied to the integers [0] to [n-1].
-      @raise Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]. *)
+      applied to the integers [0] to [n-1]. *)
 
   val append : t -> t -> t
+  [@@alert exn "Invalid_argument if [length v1 + length v2 > Sys.max_floatarray_length]"]
   (** [append v1 v2] returns a fresh floatarray containing the
-      concatenation of the floatarrays [v1] and [v2].
-      @raise Invalid_argument if
-      [length v1 + length v2 > Sys.max_floatarray_length]. *)
+      concatenation of the floatarrays [v1] and [v2]. *)
 
   val concat : t list -> t
+  [@@alert exn "Invalid_argument if [length result > Sys.max_floatarray_length]"]
   (** Same as {!append}, but concatenates a list of floatarrays. *)
 
   val sub : t -> int -> int -> t
+  [@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid subarray of [a]; that is, if [pos < 0], or [len < 0], or [pos + len > length a]"]
   (** [sub a pos len] returns a fresh floatarray of length [len],
       containing the elements number [pos] to [pos + len - 1]
-      of floatarray [a].
-      @raise Invalid_argument if [pos] and [len] do not
-      designate a valid subarray of [a]; that is, if
-      [pos < 0], or [len < 0], or [pos + len > length a]. *)
+      of floatarray [a]. *)
 
   val copy : t -> t
   (** [copy a] returns a copy of [a], that is, a fresh floatarray
       containing the same elements as [a]. *)
 
   val fill : t -> int -> int -> float -> unit
+  [@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid subarray of [a]"]
   (** [fill a pos len x] modifies the floatarray [a] in place,
-      storing [x] in elements number [pos] to [pos + len - 1].
-      @raise Invalid_argument if [pos] and [len] do not
-      designate a valid subarray of [a]. *)
+      storing [x] in elements number [pos] to [pos + len - 1]. *)
 
   val blit : t -> int -> t -> int -> int -> unit
+  [@@alert exn "Invalid_argument if [src_pos] and [len] do not designate a valid subarray of [src], or if [dst_pos] and [len] do not designate a valid subarray of [dst]"]
   (** [blit src src_pos dst dst_pos len] copies [len] elements
       from floatarray [src], starting at element number [src_pos],
       to floatarray [dst], starting at element number [dst_pos].
       It works correctly even if
       [src] and [dst] are the same floatarray, and the source and
-      destination chunks overlap.
-      @raise Invalid_argument if [src_pos] and [len] do not
-      designate a valid subarray of [src], or if [dst_pos] and [len] do not
-      designate a valid subarray of [dst]. *)
+      destination chunks overlap. *)
 
   val to_list : t -> float list
   (** [to_list a] returns the list of all the elements of [a]. *)
 
   val of_list : float list -> t
+  [@@alert exn "Invalid_argument if the length of [l] is greater than [Sys.max_floatarray_length]"]
   (** [of_list l] returns a fresh floatarray containing the elements
-      of [l].
-      @raise Invalid_argument if the length of [l] is greater than
-      [Sys.max_floatarray_length].*)
+      of [l]. *)
 
   (** {2 Iterators} *)
 
@@ -624,15 +615,15 @@ module Array : sig
   (** {2 Iterators on two arrays} *)
 
   val iter2 : (float -> float -> unit) -> t -> t -> unit
+  [@@alert exn "Invalid_argument if the floatarrays are not the same size"]
   (** [Array.iter2 f a b] applies function [f] to all the elements of [a]
-      and [b].
-      @raise Invalid_argument if the floatarrays are not the same size. *)
+      and [b]. *)
 
   val map2 : (float -> float -> float) -> t -> t -> t
+  [@@alert exn "Invalid_argument if the floatarrays are not the same size"]
   (** [map2 f a b] applies function [f] to all the elements of [a]
       and [b], and builds a floatarray with the results returned by [f]:
-      [[| f a.(0) b.(0); ...; f a.(length a - 1) b.(length b - 1)|]].
-      @raise Invalid_argument if the floatarrays are not the same size. *)
+      [[| f a.(0) b.(0); ...; f a.(length a - 1) b.(length b - 1)|]]. *)
 
   (** {2 Array scanning} *)
 
@@ -841,78 +832,70 @@ module ArrayLabels : sig
   (** Return the length (number of elements) of the given floatarray. *)
 
   val get : t -> int -> float
-  (** [get a n] returns the element number [n] of floatarray [a].
-      @raise Invalid_argument if [n] is outside the range 0 to
-      [(length a - 1)]. *)
+  [@@alert exn "Invalid_argument if [n] is outside the range 0 to [(length a - 1)]"]
+  (** [get a n] returns the element number [n] of floatarray [a]. *)
 
   val set : t -> int -> float -> unit
+  [@@alert exn "Invalid_argument if [n] is outside the range 0 to [(length a - 1)]"]
   (** [set a n x] modifies floatarray [a] in place, replacing element
-      number [n] with [x].
-      @raise Invalid_argument if [n] is outside the range 0 to
-      [(length a - 1)]. *)
+      number [n] with [x]. *)
 
   val make : int -> float -> t
-  (** [make n x] returns a fresh floatarray of length [n], initialized with [x].
-      @raise Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]. *)
+  [@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]"]
+  (** [make n x] returns a fresh floatarray of length [n], initialized with [x]. *)
 
   val create : int -> t
+  [@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]"]
   (** [create n] returns a fresh floatarray of length [n],
-      with uninitialized data.
-      @raise Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]. *)
+      with uninitialized data. *)
 
   val init : int -> f:(int -> float) -> t
+  [@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]"]
   (** [init n ~f] returns a fresh floatarray of length [n],
       with element number [i] initialized to the result of [f i].
       In other terms, [init n ~f] tabulates the results of [f]
-      applied to the integers [0] to [n-1].
-      @raise Invalid_argument if [n < 0] or [n > Sys.max_floatarray_length]. *)
+      applied to the integers [0] to [n-1]. *)
 
   val append : t -> t -> t
+  [@@alert exn "Invalid_argument if [length v1 + length v2 > Sys.max_floatarray_length]"]
   (** [append v1 v2] returns a fresh floatarray containing the
-      concatenation of the floatarrays [v1] and [v2].
-      @raise Invalid_argument if
-      [length v1 + length v2 > Sys.max_floatarray_length]. *)
+      concatenation of the floatarrays [v1] and [v2]. *)
 
   val concat : t list -> t
+  [@@alert exn "Invalid_argument if [length result > Sys.max_floatarray_length]"]
   (** Same as {!append}, but concatenates a list of floatarrays. *)
 
   val sub : t -> pos:int -> len:int -> t
+  [@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid subarray of [a]; that is, if [pos < 0], or [len < 0], or [pos + len > length a]"]
   (** [sub a ~pos ~len] returns a fresh floatarray of length [len],
       containing the elements number [pos] to [pos + len - 1]
-      of floatarray [a].
-      @raise Invalid_argument if [pos] and [len] do not
-      designate a valid subarray of [a]; that is, if
-      [pos < 0], or [len < 0], or [pos + len > length a]. *)
+      of floatarray [a]. *)
 
   val copy : t -> t
   (** [copy a] returns a copy of [a], that is, a fresh floatarray
       containing the same elements as [a]. *)
 
   val fill : t -> pos:int -> len:int -> float -> unit
+  [@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid subarray of [a]"]
   (** [fill a ~pos ~len x] modifies the floatarray [a] in place,
-      storing [x] in elements number [pos] to [pos + len - 1].
-      @raise Invalid_argument if [pos] and [len] do not
-      designate a valid subarray of [a]. *)
+      storing [x] in elements number [pos] to [pos + len - 1]. *)
 
   val blit : src:t -> src_pos:int -> dst:t -> dst_pos:int -> len:int -> unit
+  [@@alert exn "Invalid_argument if [src_pos] and [len] do not designate a valid subarray of [src], or if [dst_pos] and [len] do not designate a valid subarray of [dst]"]
   (** [blit ~src ~src_pos ~dst ~dst_pos ~len] copies [len] elements
       from floatarray [src], starting at element number [src_pos],
       to floatarray [dst], starting at element number [dst_pos].
       It works correctly even if
       [src] and [dst] are the same floatarray, and the source and
-      destination chunks overlap.
-      @raise Invalid_argument if [src_pos] and [len] do not
-      designate a valid subarray of [src], or if [dst_pos] and [len] do not
-      designate a valid subarray of [dst]. *)
+      destination chunks overlap. *)
 
   val to_list : t -> float list
   (** [to_list a] returns the list of all the elements of [a]. *)
 
   val of_list : float list -> t
+  [@@alert exn "Invalid_argument if the length of [l] is greater than [Sys.max_floatarray_length]"]
   (** [of_list l] returns a fresh floatarray containing the elements
-      of [l].
-      @raise Invalid_argument if the length of [l] is greater than
-      [Sys.max_floatarray_length].*)
+      of [l]. *)
 
   (** {2 Iterators} *)
 
@@ -958,15 +941,15 @@ module ArrayLabels : sig
   (** {2 Iterators on two arrays} *)
 
   val iter2 : f:(float -> float -> unit) -> t -> t -> unit
+  [@@alert exn "Invalid_argument if the floatarrays are not the same size"]
   (** [Array.iter2 ~f a b] applies function [f] to all the elements of [a]
-      and [b].
-      @raise Invalid_argument if the floatarrays are not the same size. *)
+      and [b]. *)
 
   val map2 : f:(float -> float -> float) -> t -> t -> t
+  [@@alert exn "Invalid_argument if the floatarrays are not the same size"]
   (** [map2 ~f a b] applies function [f] to all the elements of [a]
       and [b], and builds a floatarray with the results returned by [f]:
-      [[| f a.(0) b.(0); ...; f a.(length a - 1) b.(length b - 1)|]].
-      @raise Invalid_argument if the floatarrays are not the same size. *)
+      [[| f a.(0) b.(0); ...; f a.(length a - 1) b.(length b - 1)|]]. *)
 
   (** {2 Array scanning} *)
 

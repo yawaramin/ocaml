@@ -69,25 +69,21 @@ val to_bytes : t -> bytes
     @since 4.02 *)
 
 val sub : t -> int -> int -> string
+[@@alert exn "Invalid_argument if [off] and [len] do not designate a valid range of [b]"]
 (** [Buffer.sub b off len] returns a copy of [len] bytes from the
-    current contents of the buffer [b], starting at offset [off].
-    @raise Invalid_argument if [off] and [len] do not designate a valid
-    range of [b]. *)
+    current contents of the buffer [b], starting at offset [off]. *)
 
 val blit : t -> int -> bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if [srcoff] and [len] do not designate a valid range of [src], or if [dstoff] and [len] do not designate a valid range of [dst]"]
 (** [Buffer.blit src srcoff dst dstoff len] copies [len] characters from
    the current contents of the buffer [src], starting at offset [srcoff]
    to [dst], starting at character [dstoff].
-   @raise Invalid_argument if [srcoff] and [len] do not designate a valid
-   range of [src], or if [dstoff] and [len] do not designate a valid
-   range of [dst].
    @since 3.11.2
 *)
 
 val nth : t -> int -> char
-(** Get the n-th character of the buffer.
-    @raise Invalid_argument if
-    index out of bounds *)
+[@@alert exn "Invalid_argument if index out of bounds"]
+(** Get the n-th character of the buffer. *)
 
 val length : t -> int
 (** Return the number of characters currently contained in the buffer. *)
@@ -103,31 +99,31 @@ val reset : t -> unit
    faster reclamation of the space used by the buffer. *)
 
 val output_buffer : out_channel -> t -> unit
+[@@alert exn "Sys_error if write fails"]
 (** [output_buffer oc b] writes the current contents of buffer [b]
    on the output channel [oc]. *)
 
 val truncate : t -> int -> unit
+[@@alert exn "Invalid_argument if [len < 0] or [len > length b]"]
 (** [truncate b len] truncates the length of [b] to [len]
   Note: the internal byte sequence is not shortened.
-  @raise Invalid_argument if [len < 0] or [len > length b].
   @since 4.05 *)
 
 (** {1 Appending} *)
 
-(** Note: all [add_*] operations can raise [Failure] if the internal byte
-    sequence of the buffer would need to grow beyond {!Sys.max_string_length}.
-*)
-
 val add_char : t -> char -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
 (** [add_char b c] appends the character [c] at the end of buffer [b]. *)
 
 val add_utf_8_uchar : t -> Uchar.t -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
 (** [add_utf_8_uchar b u] appends the {{:https://tools.ietf.org/html/rfc3629}
     UTF-8} encoding of [u] at the end of buffer [b].
 
     @since 4.06 *)
 
 val add_utf_16le_uchar : t -> Uchar.t -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
 (** [add_utf_16le_uchar b u] appends the
     {{:https://tools.ietf.org/html/rfc2781}UTF-16LE} encoding of [u]
     at the end of buffer [b].
@@ -135,6 +131,7 @@ val add_utf_16le_uchar : t -> Uchar.t -> unit
     @since 4.06 *)
 
 val add_utf_16be_uchar : t -> Uchar.t -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
 (** [add_utf_16be_uchar b u] appends the
     {{:https://tools.ietf.org/html/rfc2781}UTF-16BE} encoding of [u]
     at the end of buffer [b].
@@ -142,29 +139,31 @@ val add_utf_16be_uchar : t -> Uchar.t -> unit
     @since 4.06 *)
 
 val add_string : t -> string -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
 (** [add_string b s] appends the string [s] at the end of buffer [b]. *)
 
 val add_bytes : t -> bytes -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
 (** [add_bytes b s] appends the byte sequence [s] at the end of buffer [b].
     @since 4.02 *)
 
 val add_substring : t -> string -> int -> int -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
+[@@alert exn "Invalid_argument if [ofs] and [len] do not designate a valid range of [s]"]
 (** [add_substring b s ofs len] takes [len] characters from offset
-   [ofs] in string [s] and appends them at the end of buffer [b].
-
-    @raise Invalid_argument if [ofs] and [len] do not designate a valid
-    range of [s]. *)
+   [ofs] in string [s] and appends them at the end of buffer [b]. *)
 
 val add_subbytes : t -> bytes -> int -> int -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
+[@@alert exn "Invalid_argument if [ofs] and [len] do not designate a valid range of [s]"]
 (** [add_subbytes b s ofs len] takes [len] characters from offset
     [ofs] in byte sequence [s] and appends them at the end of buffer [b].
-
-    @raise Invalid_argument if [ofs] and [len] do not designate a valid
-    range of [s].
 
     @since 4.02 *)
 
 val add_substitute : t -> (string -> string) -> string -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
+[@@alert exn "Not_found if the closing character of a parenthesized variable cannot be found"]
 (** [add_substitute b f s] appends the string pattern [s] at the end
    of buffer [b] with substitution.
    The substitution process looks for variables into
@@ -176,23 +175,19 @@ val add_substitute : t -> (string -> string) -> string -> unit
    - an arbitrary sequence of characters enclosed by a pair of
    matching parentheses or curly brackets.
    An escaped [$] character is a [$] that immediately follows a backslash
-   character; it then stands for a plain [$].
-   @raise Not_found if the closing character of a parenthesized variable
-   cannot be found. *)
+   character; it then stands for a plain [$]. *)
 
 val add_buffer : t -> t -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
 (** [add_buffer b1 b2] appends the current contents of buffer [b2]
    at the end of buffer [b1].  [b2] is not modified. *)
 
 val add_channel : t -> in_channel -> int -> unit
+[@@alert exn "Failure if the internal byte sequence of the buffer would need to grow beyond {!Sys.max_string_length}"]
+[@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_string_length]"]
+[@@alert exn "End_of_file if the channel contains fewer than [n] characters. In this case, the characters are still added to the buffer, so as to avoid loss of data"]
 (** [add_channel b ic n] reads at most [n] characters from the
-   input channel [ic] and stores them at the end of buffer [b].
-   @raise End_of_file if the channel contains fewer than [n]
-   characters. In this case, the characters are still added to
-   the buffer, so as to avoid loss of data.
-
-   @raise Invalid_argument if [len < 0] or [len > Sys.max_string_length].
- *)
+   input channel [ic] and stores them at the end of buffer [b]. *)
 
 (** {1 Buffers and Sequences} *)
 

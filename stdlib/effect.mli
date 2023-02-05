@@ -34,9 +34,8 @@ exception Continuation_already_resumed
     than once. *)
 
 external perform : 'a t -> 'a = "%perform"
-(** [perform e] performs an effect [e].
-
-    @raise Unhandled if there is no handler for [e]. *)
+[@@alert exn "Unhandled e if there is no handler for [e]"]
+(** [perform e] performs an effect [e]. *)
 
 module Deep : sig
   (** Deep handlers *)
@@ -46,26 +45,20 @@ module Deep : sig
       value and returns a ['b] value. *)
 
   val continue: ('a, 'b) continuation -> 'a -> 'b
-  (** [continue k x] resumes the continuation [k] by passing [x] to [k].
-
-      @raise Continuation_already_resumed if the continuation has already been
-      resumed. *)
+  [@@alert exn "Continuation_already_resumed if the continuation has already been resumed"]
+  (** [continue k x] resumes the continuation [k] by passing [x] to [k]. *)
 
   val discontinue: ('a, 'b) continuation -> exn -> 'b
+  [@@alert exn "Continuation_already_resumed if the continuation has already been resumed"]
   (** [discontinue k e] resumes the continuation [k] by raising the
-      exception [e] in [k].
-
-      @raise Continuation_already_resumed if the continuation has already been
-      resumed. *)
+      exception [e] in [k]. *)
 
   val discontinue_with_backtrace:
     ('a, 'b) continuation -> exn -> Printexc.raw_backtrace -> 'b
+  [@@alert exn "Continuation_already_resumed if the continuation has already been resumed"]
   (** [discontinue_with_backtrace k e bt] resumes the continuation [k] by
       raising the exception [e] in [k] using [bt] as the origin for the
-      exception.
-
-      @raise Continuation_already_resumed if the continuation has already been
-      resumed. *)
+      exception. *)
 
   type ('a,'b) handler =
     { retc: 'a -> 'b;
@@ -113,31 +106,22 @@ module Shallow : sig
       effects performed by the computation enclosed by the handler. *)
 
   val continue_with : ('c,'a) continuation -> 'c -> ('a,'b) handler -> 'b
+  [@@alert exn "Continuation_already_resumed if the continuation has already been resumed"]
   (** [continue_with k v h] resumes the continuation [k] with value [v] with
-      the handler [h].
-
-      @raise Continuation_already_resumed if the continuation has already been
-      resumed.
-   *)
+      the handler [h]. *)
 
   val discontinue_with : ('c,'a) continuation -> exn -> ('a,'b) handler -> 'b
+  [@@alert exn "Continuation_already_resumed if the continuation has already been resumed"]
   (** [discontinue_with k e h] resumes the continuation [k] by raising the
-      exception [e] with the handler [h].
-
-      @raise Continuation_already_resumed if the continuation has already been
-      resumed.
-   *)
+      exception [e] with the handler [h]. *)
 
   val discontinue_with_backtrace :
     ('a,'b) continuation -> exn -> Printexc.raw_backtrace ->
     ('b,'c) handler -> 'c
+  [@@alert exn "Continuation_already_resumed if the continuation has already been resumed"]
   (** [discontinue_with k e bt h] resumes the continuation [k] by raising the
       exception [e] with the handler [h] using the raw backtrace [bt] as the
-      origin of the exception.
-
-      @raise Continuation_already_resumed if the continuation has already been
-      resumed.
-   *)
+      origin of the exception. *)
 
   external get_callstack :
     ('a,'b) continuation -> int -> Printexc.raw_backtrace =

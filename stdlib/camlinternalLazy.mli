@@ -22,5 +22,7 @@ type 'a t = 'a lazy_t
 exception Undefined
 
 val force_lazy_block : 'a lazy_t -> 'a
+[@@alert exn "exn"]
 
 val force_gen : only_val:bool -> 'a lazy_t -> 'a
+[@@alert exn "Undefined"]

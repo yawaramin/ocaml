@@ -36,16 +36,26 @@ module type S =
     val cardinal: t -> int
     val elements: t -> elt list
     val min_elt: t -> elt
+    [@@alert exn "Not_found if the set is empty"]
+
     val min_elt_opt: t -> elt option
     val max_elt: t -> elt
     val max_elt_opt: t -> elt option
     val choose: t -> elt
+    [@@alert exn "Not_found if the set is empty"]
+
     val choose_opt: t -> elt option
     val find: elt -> t -> elt
+    [@@alert exn "Not_found if no such element found"]
+
     val find_opt: elt -> t -> elt option
     val find_first: (elt -> bool) -> t -> elt
+    [@@alert exn "Not_found if no such element found"]
+
     val find_first_opt: (elt -> bool) -> t -> elt option
     val find_last: (elt -> bool) -> t -> elt
+    [@@alert exn "Not_found if no such element found"]
+
     val find_last_opt: (elt -> bool) -> t -> elt option
     val iter: (elt -> unit) -> t -> unit
     val fold: (elt -> 'a -> 'a) -> t -> 'a -> 'a
@@ -100,7 +110,7 @@ module Make(Ord: OrderedType) =
     let bal l v r =
       let hl = match l with Empty -> 0 | Node {h} -> h in
       let hr = match r with Empty -> 0 | Node {h} -> h in
-      if hl > hr + 2 then begin
+      if[@alert "-exn"] hl > hr + 2 then begin
         match l with
           Empty -> invalid_arg "Set.bal"
         | Node{l=ll; v=lv; r=lr} ->
@@ -175,7 +185,7 @@ module Make(Ord: OrderedType) =
     (* Smallest and greatest element of a set *)
 
     let rec min_elt = function
-        Empty -> raise Not_found
+        Empty -> (raise[@alert "-exn"]) Not_found
       | Node{l=Empty; v} -> v
       | Node{l} -> min_elt l
 
@@ -185,7 +195,7 @@ module Make(Ord: OrderedType) =
       | Node{l} -> min_elt_opt l
 
     let rec max_elt = function
-        Empty -> raise Not_found
+        Empty -> (raise[@alert "-exn"]) Not_found
       | Node{v; r=Empty} -> v
       | Node{r} -> max_elt r
 
@@ -197,7 +207,7 @@ module Make(Ord: OrderedType) =
     (* Remove the smallest element of the given set *)
 
     let rec remove_min_elt = function
-        Empty -> invalid_arg "Set.remove_min_elt"
+        Empty -> (invalid_arg[@alert "-exn"]) "Set.remove_min_elt"
       | Node{l=Empty; r} -> r
       | Node{l; v; r} -> bal (remove_min_elt l) v r
 
@@ -429,7 +439,7 @@ module Make(Ord: OrderedType) =
     let choose_opt = min_elt_opt
 
     let rec find x = function
-        Empty -> raise Not_found
+        Empty -> (raise[@alert "-exn"]) Not_found
       | Node{l; v; r} ->
           let c = Ord.compare x v in
           if c = 0 then v
@@ -446,7 +456,7 @@ module Make(Ord: OrderedType) =
 
     let rec find_first f = function
         Empty ->
-          raise Not_found
+          (raise[@alert "-exn"]) Not_found
       | Node{l; v; r} ->
           if f v then
             find_first_aux v f l
@@ -482,7 +492,7 @@ module Make(Ord: OrderedType) =
 
     let rec find_last f = function
         Empty ->
-          raise Not_found
+          (raise[@alert "-exn"]) Not_found
       | Node{l; v; r} ->
           if f v then
             find_last_aux v f r
@@ -565,7 +575,7 @@ module Make(Ord: OrderedType) =
             Node{l=Node{l=Empty; v=x0; r=Empty; h=1}; v=x1;
                  r=Node{l=Empty; v=x2; r=Empty; h=1}; h=2}, l
         | n, l ->
-          let nl = n / 2 in
+          let nl = begin[@alert "-exn"] n / 2 end in
           let left, l = sub nl l in
           match l with
           | [] -> assert false

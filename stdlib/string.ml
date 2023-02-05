@@ -33,18 +33,18 @@ let bts = B.unsafe_to_string
 let bos = B.unsafe_of_string
 
 let make n c =
-  B.make n c |> bts
+  (B.make[@alert "-exn"]) n c |> bts
 let init n f =
-  B.init n f |> bts
+  (B.init[@alert "-exn"]) n f |> bts
 let empty = ""
 let of_bytes = B.to_string
 let to_bytes = B.of_string
 let sub s ofs len =
-  B.sub (bos s) ofs len |> bts
+  (B.sub[@alert "-exn"]) (bos s) ofs len |> bts
 let blit =
-  B.blit_string
+  B.blit_string[@alert "-exn"]
 
-let ensure_ge (x:int) y = if x >= y then x else invalid_arg "String.concat"
+let ensure_ge (x:int) y = if x >= y then x else (invalid_arg[@alert "-exn"]) "String.concat"
 
 let rec sum_lengths acc seplen = function
   | [] -> acc
@@ -64,10 +64,10 @@ let concat sep = function
     [] -> ""
   | l -> let seplen = length sep in bts @@
           unsafe_blits
-            (B.create (sum_lengths 0 seplen l))
+            ((B.create[@alert "-exn"]) (sum_lengths 0 seplen l))
             0 sep seplen l
 
-let cat = ( ^ )
+let cat = ( ^ )[@alert "-exn"]
 
 (* duplicated in bytes.ml *)
 let iter f s =
@@ -112,7 +112,7 @@ let escaped s =
 
 (* duplicated in bytes.ml *)
 let rec index_rec s lim i c =
-  if i >= lim then raise Not_found else
+  if i >= lim then (raise[@alert "-exn"]) Not_found else
   if unsafe_get s i = c then i else index_rec s lim (i + 1) c
 
 (* duplicated in bytes.ml *)
@@ -129,20 +129,20 @@ let index_opt s c = index_rec_opt s (length s) 0 c
 (* duplicated in bytes.ml *)
 let index_from s i c =
   let l = length s in
-  if i < 0 || i > l then invalid_arg "String.index_from / Bytes.index_from" else
+  if i < 0 || i > l then (invalid_arg[@alert "-exn"]) "String.index_from / Bytes.index_from" else
     index_rec s l i c
 
 (* duplicated in bytes.ml *)
 let index_from_opt s i c =
   let l = length s in
   if i < 0 || i > l then
-    invalid_arg "String.index_from_opt / Bytes.index_from_opt"
+    (invalid_arg[@alert "-exn"]) "String.index_from_opt / Bytes.index_from_opt"
   else
     index_rec_opt s l i c
 
 (* duplicated in bytes.ml *)
 let rec rindex_rec s i c =
-  if i < 0 then raise Not_found else
+  if i < 0 then (raise[@alert "-exn"]) Not_found else
   if unsafe_get s i = c then i else rindex_rec s (i - 1) c
 
 (* duplicated in bytes.ml *)
@@ -151,7 +151,7 @@ let rindex s c = rindex_rec s (length s - 1) c
 (* duplicated in bytes.ml *)
 let rindex_from s i c =
   if i < -1 || i >= length s then
-    invalid_arg "String.rindex_from / Bytes.rindex_from"
+    (invalid_arg[@alert "-exn"]) "String.rindex_from / Bytes.rindex_from"
   else
     rindex_rec s i c
 
@@ -166,7 +166,7 @@ let rindex_opt s c = rindex_rec_opt s (length s - 1) c
 (* duplicated in bytes.ml *)
 let rindex_from_opt s i c =
   if i < -1 || i >= length s then
-    invalid_arg "String.rindex_from_opt / Bytes.rindex_from_opt"
+    (invalid_arg[@alert "-exn"]) "String.rindex_from_opt / Bytes.rindex_from_opt"
   else
     rindex_rec_opt s i c
 
@@ -174,7 +174,7 @@ let rindex_from_opt s i c =
 let contains_from s i c =
   let l = length s in
   if i < 0 || i > l then
-    invalid_arg "String.contains_from / Bytes.contains_from"
+    (invalid_arg[@alert "-exn"]) "String.contains_from / Bytes.contains_from"
   else
     try ignore (index_rec s l i c); true with Not_found -> false
 
@@ -184,7 +184,7 @@ let contains s c = contains_from s 0 c
 (* duplicated in bytes.ml *)
 let rcontains_from s i c =
   if i < 0 || i >= length s then
-    invalid_arg "String.rcontains_from / Bytes.rcontains_from"
+    (invalid_arg[@alert "-exn"]) "String.rcontains_from / Bytes.rcontains_from"
   else
     try ignore (rindex_rec s i c); true with Not_found -> false
 
@@ -244,17 +244,17 @@ let to_seq s = bos s |> B.to_seq
 
 let to_seqi s = bos s |> B.to_seqi
 
-let of_seq g = B.of_seq g |> bts
+let of_seq g = (B.of_seq[@alert "-exn"]) g |> bts
 
 (* UTF decoders and validators *)
 
 let get_utf_8_uchar s i = B.get_utf_8_uchar (bos s) i
 let is_valid_utf_8 s = B.is_valid_utf_8 (bos s)
 
-let get_utf_16be_uchar s i = B.get_utf_16be_uchar (bos s) i
+let get_utf_16be_uchar s i = (B.get_utf_16be_uchar[@alert "-exn"]) (bos s) i
 let is_valid_utf_16be s = B.is_valid_utf_16be (bos s)
 
-let get_utf_16le_uchar s i = B.get_utf_16le_uchar (bos s) i
+let get_utf_16le_uchar s i = (B.get_utf_16le_uchar[@alert "-exn"]) (bos s) i
 let is_valid_utf_16le s = B.is_valid_utf_16le (bos s)
 
 (** {6 Binary encoding/decoding of integers} *)
@@ -263,6 +263,9 @@ external get_uint8 : string -> int -> int = "%string_safe_get"
 external get_uint16_ne : string -> int -> int = "%caml_string_get16"
 external get_int32_ne : string -> int -> int32 = "%caml_string_get32"
 external get_int64_ne : string -> int -> int64 = "%caml_string_get64"
+
+(* Turning off for the rest of this file which has only the getters *)
+[@@@alert "-exn"]
 
 let get_int8 s i = B.get_int8 (bos s) i
 let get_uint16_le s i = B.get_uint16_le (bos s) i

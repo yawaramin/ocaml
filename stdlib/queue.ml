@@ -57,7 +57,7 @@ let push =
 
 let peek q =
   match q.first with
-  | Nil -> raise Empty
+  | Nil -> (raise[@alert "-exn"]) Empty
   | Cons { content } -> content
 
 let peek_opt q =
@@ -70,7 +70,7 @@ let top =
 
 let take q =
   match q.first with
-  | Nil -> raise Empty
+  | Nil -> (raise[@alert "-exn"]) Empty
   | Cons { content; next = Nil } ->
     clear q;
     content

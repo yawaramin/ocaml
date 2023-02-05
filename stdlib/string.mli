@@ -76,16 +76,15 @@ type t = string
 (** The type for strings. *)
 
 val make : int -> char -> string
+[@@alert exn "Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}"]
 (** [make n c] is a string of length [n] with each index holding the
-    character [c].
-
-    @raise Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}. *)
+    character [c]. *)
 
 val init : int -> (int -> char) -> string
+[@@alert exn "Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}"]
 (** [init n f] is a string of length [n] with index
     [i] holding the character [f i] (called in increasing index order).
 
-    @raise Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}.
     @since 4.02 *)
 
 val empty : string
@@ -112,10 +111,9 @@ external length : string -> int = "%string_length"
 (** [length s] is the length (number of bytes/characters) of [s]. *)
 
 external get : string -> int -> char = "%string_safe_get"
+[@@alert exn "Invalid_argument if [i] not an index of [s]"]
 (** [get s i] is the character at index [i] in [s]. This is the same
-    as writing [s.[i]].
-
-    @raise Invalid_argument if [i] not an index of [s]. *)
+    as writing [s.[i]]. *)
 
 (** {1:concat Concatenating}
 
@@ -123,17 +121,13 @@ external get : string -> int -> char = "%string_safe_get"
     strings. *)
 
 val concat : string -> string list -> string
+[@@alert exn "Invalid_argument if the result is longer than {!Sys.max_string_length} bytes"]
 (** [concat sep ss] concatenates the list of strings [ss], inserting
-    the separator string [sep] between each.
-
-    @raise Invalid_argument if the result is longer than
-    {!Sys.max_string_length} bytes. *)
+    the separator string [sep] between each. *)
 
 val cat : string -> string -> string
+[@@alert exn "Invalid_argument if the result is longer than {!Sys.max_string_length} bytes"]
 (** [cat s1 s2] concatenates s1 and s2 ([s1 ^ s2]).
-
-    @raise Invalid_argument if the result is longer than
-    {!Sys.max_string_length} bytes.
 
     @since 4.13
 *)
@@ -163,17 +157,14 @@ val ends_with :
     @since 4.13 *)
 
 val contains_from : string -> int -> char -> bool
+[@@alert exn "Invalid_argument if [start] is not a valid position in [s]"]
 (** [contains_from s start c] is [true] if and only if [c] appears in [s]
-    after position [start].
-
-    @raise Invalid_argument if [start] is not a valid position in [s]. *)
+    after position [start]. *)
 
 val rcontains_from : string -> int -> char -> bool
+[@@alert exn "Invalid_argument if [stop < 0] or [stop+1] is not a valid position in [s]"]
 (** [rcontains_from s stop c] is [true] if and only if [c] appears in [s]
-    before position [stop+1].
-
-    @raise Invalid_argument if [stop < 0] or [stop+1] is not a valid
-    position in [s]. *)
+    before position [stop+1]. *)
 
 val contains : string -> char -> bool
 (** [contains s c] is {!String.contains_from}[ s 0 c]. *)
@@ -181,12 +172,11 @@ val contains : string -> char -> bool
 (** {1:extract Extracting substrings} *)
 
 val sub : string -> int -> int -> string
+[@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid substring of [s]"]
+
 (** [sub s pos len] is a string of length [len], containing the
     substring of [s] that starts at position [pos] and has length
-    [len].
-
-    @raise Invalid_argument if [pos] and [len] do not designate a valid
-    substring of [s]. *)
+    [len]. *)
 
 val split_on_char : char -> string -> string list
 (** [split_on_char sep s] is the list of all (possibly empty)
@@ -242,6 +232,7 @@ val trim : string -> string
     @since 4.00 *)
 
 val escaped : string -> string
+[@@alert exn "Invalid_argument if the result is longer than {!Sys.max_string_length} bytes"]
 (** [escaped s] is [s] with special characters represented by escape
     sequences, following the lexical conventions of OCaml.
 
@@ -250,10 +241,7 @@ val escaped : string -> string
 
     The function {!Scanf.unescaped} is a left inverse of [escaped],
     i.e. [Scanf.unescaped (escaped s) = s] for any string [s] (unless
-    [escaped s] fails).
-
-    @raise Invalid_argument if the result is longer than
-    {!Sys.max_string_length} bytes. *)
+    [escaped s] fails). *)
 
 val uppercase_ascii : string -> string
 (** [uppercase_ascii s] is [s] with all lowercase letters
@@ -294,32 +282,29 @@ val iteri : (int -> char -> unit) -> string -> unit
 (** {1:searching Searching} *)
 
 val index_from : string -> int -> char -> int
+[@@alert exn "Not_found if [c] does not occur in [s] after position [i]"]
+[@@alert exn "Invalid_argument if [i] is not a valid position in [s]"]
 (** [index_from s i c] is the index of the first occurrence of [c] in
-    [s] after position [i].
-
-    @raise Not_found if [c] does not occur in [s] after position [i].
-    @raise Invalid_argument if [i] is not a valid position in [s]. *)
-
+    [s] after position [i]. *)
 
 val index_from_opt : string -> int -> char -> int option
+[@@alert exn "Invalid_argument if [i] is not a valid position in [s]"]
 (** [index_from_opt s i c] is the index of the first occurrence of [c]
     in [s] after position [i] (if any).
 
-    @raise Invalid_argument if [i] is not a valid position in [s].
     @since 4.05 *)
 
 val rindex_from : string -> int -> char -> int
+[@@alert exn "Not_found if [c] does not occur in [s] before position [i+1]"]
+[@@alert exn "Invalid_argument if [i+1] is not a valid position in [s]"]
 (** [rindex_from s i c] is the index of the last occurrence of [c] in
-    [s] before position [i+1].
-
-    @raise Not_found if [c] does not occur in [s] before position [i+1].
-    @raise Invalid_argument if [i+1] is not a valid position in [s]. *)
+    [s] before position [i+1]. *)
 
 val rindex_from_opt : string -> int -> char -> int option
+[@@alert exn "Invalid_argument if [i+1] is not a valid position in [s]"]
 (** [rindex_from_opt s i c] is the index of the last occurrence of [c]
     in [s] before position [i+1] (if any).
 
-    @raise Invalid_argument if [i+1] is not a valid position in [s].
     @since 4.05 *)
 
 val index : string -> char -> int
@@ -353,6 +338,7 @@ val to_seqi : t -> (int * char) Seq.t
     @since 4.07 *)
 
 val of_seq : char Seq.t -> t
+[@@alert exn "Failure if the string would exceed [Sys.max_string_length]"]
 (** [of_seq s] is a string made of the sequence's characters.
 
     @since 4.07 *)
@@ -374,6 +360,7 @@ val is_valid_utf_8 : t -> bool
 (** {2:utf_16be UTF-16BE} *)
 
 val get_utf_16be_uchar : t -> int -> Uchar.utf_decode
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_utf_16be_uchar b i] decodes an UTF-16BE character at index
     [i] in [b]. *)
 
@@ -384,6 +371,7 @@ val is_valid_utf_16be : t -> bool
 (** {2:utf_16le UTF-16LE} *)
 
 val get_utf_16le_uchar : t -> int -> Uchar.utf_decode
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_utf_16le_uchar b i] decodes an UTF-16LE character at index
     [i] in [b]. *)
 
@@ -393,20 +381,14 @@ val is_valid_utf_16le : t -> bool
 
 val blit :
   string -> int -> bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if [src_pos] and [len] do not designate a valid range of [src], or if [dst_pos] and [len] do not designate a valid range of [dst]"]
 (** [blit src src_pos dst dst_pos len] copies [len] bytes
     from the string [src], starting at index [src_pos],
-    to byte sequence [dst], starting at character number [dst_pos].
-
-    @raise Invalid_argument if [src_pos] and [len] do not
-    designate a valid range of [src], or if [dst_pos] and [len]
-    do not designate a valid range of [dst]. *)
+    to byte sequence [dst], starting at character number [dst_pos]. *)
 
 (** {1 Binary decoding of integers} *)
 
 (** The functions in this section binary decode integers from strings.
-
-    All following functions raise [Invalid_argument] if the characters
-    needed at index [i] to decode the integer are not available.
 
     Little-endian (resp. big-endian) encoding means that least
     (resp. most) significant bytes are stored first.  Big-endian is
@@ -424,6 +406,7 @@ val blit :
 *)
 
 val get_uint8 : string -> int -> int
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_uint8 b i] is [b]'s unsigned 8-bit integer starting at character
     index [i].
 
@@ -431,6 +414,7 @@ val get_uint8 : string -> int -> int
 *)
 
 val get_int8 : string -> int -> int
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_int8 b i] is [b]'s signed 8-bit integer starting at character
     index [i].
 
@@ -438,6 +422,7 @@ val get_int8 : string -> int -> int
 *)
 
 val get_uint16_ne : string -> int -> int
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_uint16_ne b i] is [b]'s native-endian unsigned 16-bit integer
     starting at character index [i].
 
@@ -445,6 +430,7 @@ val get_uint16_ne : string -> int -> int
 *)
 
 val get_uint16_be : string -> int -> int
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_uint16_be b i] is [b]'s big-endian unsigned 16-bit integer
     starting at character index [i].
 
@@ -452,6 +438,7 @@ val get_uint16_be : string -> int -> int
 *)
 
 val get_uint16_le : string -> int -> int
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_uint16_le b i] is [b]'s little-endian unsigned 16-bit integer
     starting at character index [i].
 
@@ -459,6 +446,7 @@ val get_uint16_le : string -> int -> int
 *)
 
 val get_int16_ne : string -> int -> int
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_int16_ne b i] is [b]'s native-endian signed 16-bit integer
     starting at character index [i].
 
@@ -466,6 +454,7 @@ val get_int16_ne : string -> int -> int
 *)
 
 val get_int16_be : string -> int -> int
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_int16_be b i] is [b]'s big-endian signed 16-bit integer
     starting at character index [i].
 
@@ -473,6 +462,7 @@ val get_int16_be : string -> int -> int
 *)
 
 val get_int16_le : string -> int -> int
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_int16_le b i] is [b]'s little-endian signed 16-bit integer
     starting at character index [i].
 
@@ -480,6 +470,7 @@ val get_int16_le : string -> int -> int
 *)
 
 val get_int32_ne : string -> int -> int32
+[@@alert exn "Invalid_argument if the characters needed at index [i] to decode the integer are not available"]
 (** [get_int32_ne b i] is [b]'s native-endian 32-bit integer
     starting at character index [i].
 
@@ -501,6 +492,7 @@ val seeded_hash : int -> t -> int
     @since 5.0 *)
 
 val get_int32_be : string -> int -> int32
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_int32_be b i] is [b]'s big-endian 32-bit integer
     starting at character index [i].
 
@@ -508,6 +500,7 @@ val get_int32_be : string -> int -> int32
 *)
 
 val get_int32_le : string -> int -> int32
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_int32_le b i] is [b]'s little-endian 32-bit integer
     starting at character index [i].
 
@@ -515,6 +508,7 @@ val get_int32_le : string -> int -> int32
 *)
 
 val get_int64_ne : string -> int -> int64
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_int64_ne b i] is [b]'s native-endian 64-bit integer
     starting at character index [i].
 
@@ -522,6 +516,7 @@ val get_int64_ne : string -> int -> int64
 *)
 
 val get_int64_be : string -> int -> int64
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_int64_be b i] is [b]'s big-endian 64-bit integer
     starting at character index [i].
 
@@ -529,6 +524,7 @@ val get_int64_be : string -> int -> int64
 *)
 
 val get_int64_le : string -> int -> int64
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_int64_le b i] is [b]'s little-endian 64-bit integer
     starting at character index [i].
 

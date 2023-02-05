@@ -363,14 +363,13 @@ val cons : 'a -> 'a t -> 'a t
     @since 4.11 *)
 
 val init : int -> (int -> 'a) -> 'a t
+[@@alert exn "Invalid_argument if [n] is negative"]
 (** [init n f] is the sequence [f 0; f 1; ...; f (n-1)].
 
     [n] must be nonnegative.
 
     If desired, the infinite sequence [f 0; f 1; ...]
     can be defined as [map f (ints 0)].
-
-    @raise Invalid_argument if [n] is negative.
 
     @since 4.14 *)
 
@@ -483,6 +482,7 @@ val scan : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b t
     @since 4.14 *)
 
 val take : int -> 'a t -> 'a t
+[@@alert exn "Invalid_argument if [n] is negative"]
 (** [take n xs] is the sequence of the first [n] elements of [xs].
 
     If [xs] has fewer than [n] elements,
@@ -490,11 +490,10 @@ val take : int -> 'a t -> 'a t
 
     [n] must be nonnegative.
 
-    @raise Invalid_argument if [n] is negative.
-
     @since 4.14 *)
 
 val drop : int -> 'a t -> 'a t
+[@@alert exn "Invalid_argument if [n] is negative"]
 (** [drop n xs] is the sequence [xs], deprived of its first [n] elements.
 
     If [xs] has fewer than [n] elements,
@@ -506,8 +505,6 @@ val drop : int -> 'a t -> 'a t
     are demanded only when the first element of [drop n xs] is
     demanded. For this reason, [drop 1 xs] is {i not} equivalent
     to [tail xs], which queries [xs] immediately.
-
-    @raise Invalid_argument if [n] is negative.
 
     @since 4.14 *)
 
@@ -559,16 +556,13 @@ exception Forced_twice
     @since 4.14 *)
 
 val once : 'a t -> 'a t
+[@@alert exn "Forced_twice if [once xs] or its suffix is queried more than once"]
 (** The sequence [once xs] has the same elements as the sequence [xs].
 
     Regardless of whether [xs] is ephemeral or persistent,
-    [once xs] is an ephemeral sequence: it can be queried at most once.
-    If it (or a suffix of it) is queried more than once, then the exception
-    [Forced_twice] is raised. This can be useful, while debugging or testing,
+    [once xs] is an ephemeral sequence: it raises if it is queried more than once.
+    This can be useful, while debugging or testing,
     to ensure that a sequence is consumed at most once.
-
-    @raise Forced_twice if [once xs], or a suffix of it,
-           is queried more than once.
 
     @since 4.14 *)
 

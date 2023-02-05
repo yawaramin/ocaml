@@ -33,26 +33,29 @@ val executable_name : string
     executable. *)
 
 external file_exists : string -> bool = "caml_sys_file_exists"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Test if a file with the given name exists. *)
 
 external is_directory : string -> bool = "caml_sys_is_directory"
+[@@alert exn "Sys_error if no file exists with the given name"]
 (** Returns [true] if the given name refers to a directory,
     [false] if it refers to another kind of file.
-    @raise Sys_error if no file exists with the given name.
     @since 3.10
 *)
 
 external is_regular_file : string -> bool = "caml_sys_is_regular_file"
+[@@alert exn "Sys_error if no file exists with the given name"]
 (** Returns [true] if the given name refers to a regular file,
     [false] if it refers to another kind of file.
-    @raise Sys_error if no file exists with the given name.
     @since 5.1
 *)
 
 external remove : string -> unit = "caml_sys_remove"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Remove the given file name from the file system. *)
 
 external rename : string -> string -> unit = "caml_sys_rename"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Rename a file.  [rename oldpath newpath] renames the file
     called [oldpath], giving it [newpath] as its new name,
     moving it between directories if needed.  If [newpath] already
@@ -63,17 +66,19 @@ external rename : string -> string -> unit = "caml_sys_rename"
    @since 4.06 concerning the "replace existing file" behavior *)
 
 external getenv : string -> string = "caml_sys_getenv"
+[@@alert exn "Not_found if the variable is unbound"]
 (** Return the value associated to a variable in the process
-   environment.
-   @raise Not_found if the variable is unbound. *)
+   environment. *)
 
 val getenv_opt: string -> string option
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Return the value associated to a variable in the process
     environment or [None] if the variable is unbound.
     @since 4.05
 *)
 
 external command : string -> int = "caml_sys_system_command"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Execute the given shell command and return its exit code.
 
   The argument of {!Sys.command} is generally the name of a
@@ -95,28 +100,34 @@ external command : string -> int = "caml_sys_system_command"
 
 external time : unit -> (float [@unboxed]) =
   "caml_sys_time" "caml_sys_time_unboxed" [@@noalloc]
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Return the processor time, in seconds, used by the program
    since the beginning of execution. *)
 
 external chdir : string -> unit = "caml_sys_chdir"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Change the current working directory of the process. *)
 
 external mkdir : string -> int -> unit = "caml_sys_mkdir"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Create a directory with the given permissions.
 
     @since 4.12
 *)
 
 external rmdir : string -> unit = "caml_sys_rmdir"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Remove an empty directory.
 
     @since 4.12
 *)
 
 external getcwd : unit -> string = "caml_sys_getcwd"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Return the current working directory of the process. *)
 
 external readdir : string -> string array = "caml_sys_read_directory"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Return the names of all files present in the given directory.
    Names denoting the current directory and the parent directory
    (["."] and [".."] in Unix) are not returned.  Each string in the
@@ -197,12 +208,14 @@ val max_floatarray_length : int
     [--enable-flat-float-array]. *)
 
 external runtime_variant : unit -> string = "caml_runtime_variant"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Return the name of the runtime variant the program is running on.
     This is normally the argument given to [-runtime-variant] at compile
     time, but for byte-code it can be changed after compilation.
     @since 4.03 *)
 
 external runtime_parameters : unit -> string = "caml_runtime_parameters"
+[@@alert exn "Sys_error if underlying system call signals error"]
 (** Return the value of the runtime parameters, in the same format
     as the contents of the [OCAMLRUNPARAM] environment variable.
     @since 4.03 *)
@@ -224,13 +237,13 @@ type signal_behavior =
 
 external signal :
   int -> signal_behavior -> signal_behavior = "caml_install_signal_handler"
+[@@alert exn "Invalid_argument if the signal number is invalid (or not available on your system)"]
 (** Set the behavior of the system on receipt of a given signal.  The
    first argument is the signal number.  Return the behavior
-   previously associated with the signal. If the signal number is
-   invalid (or not available on your system), an [Invalid_argument]
-   exception is raised. *)
+   previously associated with the signal. *)
 
 val set_signal : int -> signal_behavior -> unit
+[@@alert exn "Invalid_argument if the signal number is invalid (or not available on your system)"]
 (** Same as {!Sys.signal} but return value is ignored. *)
 
 

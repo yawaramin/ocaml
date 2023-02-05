@@ -63,7 +63,7 @@ let of_string s = copy (unsafe_of_string s)
 
 let sub s ofs len =
   if ofs < 0 || len < 0 || ofs > length s - len
-  then invalid_arg "String.sub / Bytes.sub"
+  then (invalid_arg[@alert "-exn"]) "String.sub / Bytes.sub"
   else begin
     let r = create len in
     unsafe_blit s ofs r 0 len;
@@ -77,7 +77,7 @@ let (++) a b =
   let c = a + b in
   match a < 0, b < 0, c < 0 with
   | true , true , false
-  | false, false, true  -> invalid_arg "Bytes.extend" (* overflow *)
+  | false, false, true  -> (invalid_arg[@alert "-exn"]) "Bytes.extend" (* overflow *)
   | _ -> c
 
 let extend s left right =
@@ -90,19 +90,19 @@ let extend s left right =
 
 let fill s ofs len c =
   if ofs < 0 || len < 0 || ofs > length s - len
-  then invalid_arg "String.fill / Bytes.fill"
+  then (invalid_arg[@alert "-exn"]) "String.fill / Bytes.fill"
   else unsafe_fill s ofs len c
 
 let blit s1 ofs1 s2 ofs2 len =
   if len < 0 || ofs1 < 0 || ofs1 > length s1 - len
              || ofs2 < 0 || ofs2 > length s2 - len
-  then invalid_arg "Bytes.blit"
+  then (invalid_arg[@alert "-exn"]) "Bytes.blit"
   else unsafe_blit s1 ofs1 s2 ofs2 len
 
 let blit_string s1 ofs1 s2 ofs2 len =
   if len < 0 || ofs1 < 0 || ofs1 > string_length s1 - len
              || ofs2 < 0 || ofs2 > length s2 - len
-  then invalid_arg "String.blit / Bytes.blit_string"
+  then (invalid_arg[@alert "-exn"]) "String.blit / Bytes.blit_string"
   else unsafe_blit_string s1 ofs1 s2 ofs2 len
 
 (* duplicated in string.ml *)
@@ -113,7 +113,7 @@ let iter f a =
 let iteri f a =
   for i = 0 to length a - 1 do f i (unsafe_get a i) done
 
-let ensure_ge (x:int) y = if x >= y then x else invalid_arg "Bytes.concat"
+let ensure_ge (x:int) y = if x >= y then x else (invalid_arg[@alert "-exn"]) "Bytes.concat"
 
 let rec sum_lengths acc seplen = function
   | [] -> acc
@@ -210,11 +210,13 @@ let unsafe_escape s =
           let a = char_code c in
           unsafe_set s' !n '\\';
           incr n;
+          begin[@alert "-exn"]
           unsafe_set s' !n (char_chr (48 + a / 100));
           incr n;
           unsafe_set s' !n (char_chr (48 + (a / 10) mod 10));
           incr n;
-          unsafe_set s' !n (char_chr (48 + a mod 10));
+          unsafe_set s' !n (char_chr (48 + a mod 10))
+          end
       end;
       incr n
     done;
@@ -309,7 +311,7 @@ let ends_with ~suffix s =
 
 (* duplicated in string.ml *)
 let rec index_rec s lim i c =
-  if i >= lim then raise Not_found else
+  if i >= lim then (raise[@alert "-exn"]) Not_found else
   if unsafe_get s i = c then i else index_rec s lim (i + 1) c
 
 (* duplicated in string.ml *)
@@ -326,20 +328,20 @@ let index_opt s c = index_rec_opt s (length s) 0 c
 (* duplicated in string.ml *)
 let index_from s i c =
   let l = length s in
-  if i < 0 || i > l then invalid_arg "String.index_from / Bytes.index_from" else
+  if i < 0 || i > l then (invalid_arg[@alert "-exn"]) "String.index_from / Bytes.index_from" else
   index_rec s l i c
 
 (* duplicated in string.ml *)
 let index_from_opt s i c =
   let l = length s in
   if i < 0 || i > l then
-    invalid_arg "String.index_from_opt / Bytes.index_from_opt"
+    (invalid_arg[@alert "-exn"]) "String.index_from_opt / Bytes.index_from_opt"
   else
     index_rec_opt s l i c
 
 (* duplicated in string.ml *)
 let rec rindex_rec s i c =
-  if i < 0 then raise Not_found else
+  if i < 0 then (raise[@alert "-exn"]) Not_found else
   if unsafe_get s i = c then i else rindex_rec s (i - 1) c
 
 (* duplicated in string.ml *)
@@ -348,7 +350,7 @@ let rindex s c = rindex_rec s (length s - 1) c
 (* duplicated in string.ml *)
 let rindex_from s i c =
   if i < -1 || i >= length s then
-    invalid_arg "String.rindex_from / Bytes.rindex_from"
+    (invalid_arg[@alert "-exn"]) "String.rindex_from / Bytes.rindex_from"
   else
     rindex_rec s i c
 
@@ -363,7 +365,7 @@ let rindex_opt s c = rindex_rec_opt s (length s - 1) c
 (* duplicated in string.ml *)
 let rindex_from_opt s i c =
   if i < -1 || i >= length s then
-    invalid_arg "String.rindex_from_opt / Bytes.rindex_from_opt"
+    (invalid_arg[@alert "-exn"]) "String.rindex_from_opt / Bytes.rindex_from_opt"
   else
     rindex_rec_opt s i c
 
@@ -372,7 +374,7 @@ let rindex_from_opt s i c =
 let contains_from s i c =
   let l = length s in
   if i < 0 || i > l then
-    invalid_arg "String.contains_from / Bytes.contains_from"
+    (invalid_arg[@alert "-exn"]) "String.contains_from / Bytes.contains_from"
   else
     try ignore (index_rec s l i c); true with Not_found -> false
 
@@ -383,7 +385,7 @@ let contains s c = contains_from s 0 c
 (* duplicated in string.ml *)
 let rcontains_from s i c =
   if i < 0 || i >= length s then
-    invalid_arg "String.rcontains_from / Bytes.rcontains_from"
+    (invalid_arg[@alert "-exn"]) "String.rcontains_from / Bytes.rcontains_from"
   else
     try ignore (rindex_rec s i c); true with Not_found -> false
 
@@ -431,7 +433,7 @@ let of_seq i =
   let resize () =
     (* resize *)
     let new_len = Int.min (2 * length !buf) Sys.max_string_length in
-    if length !buf = new_len then failwith "Bytes.of_seq: cannot grow bytes";
+    if length !buf = new_len then (failwith[@alert "-exn"]) "Bytes.of_seq: cannot grow bytes";
     let new_buf = make new_len '\000' in
     blit !buf 0 new_buf 0 !n;
     buf := new_buf
@@ -744,7 +746,7 @@ let is_valid_utf_8 b =
 let get_utf_16be_uchar b i =
   let get = unsafe_get_uint16_be in
   let max = length b - 1 in
-  if i < 0 || i > max then invalid_arg "index out of bounds" else
+  if i < 0 || i > max then (invalid_arg[@alert "-exn"]) "index out of bounds" else
   if i = max then dec_invalid 1 else
   match get b i with
   | u when u < 0xD800 || u > 0xDFFF -> dec_ret 2 u
@@ -761,7 +763,7 @@ let get_utf_16be_uchar b i =
 let set_utf_16be_uchar b i u =
   let set = unsafe_set_uint16_be in
   let max = length b - 1 in
-  if i < 0 || i > max then invalid_arg "index out of bounds" else
+  if i < 0 || i > max then (invalid_arg[@alert "-exn"]) "index out of bounds" else
   match Uchar.to_int u with
   | u when u < 0 -> assert false
   | u when u <= 0xFFFF ->
@@ -798,7 +800,7 @@ let is_valid_utf_16be b =
 let get_utf_16le_uchar b i =
   let get = unsafe_get_uint16_le in
   let max = length b - 1 in
-  if i < 0 || i > max then invalid_arg "index out of bounds" else
+  if i < 0 || i > max then (invalid_arg[@alert "-exn"]) "index out of bounds" else
   if i = max then dec_invalid 1 else
   match get b i with
   | u when u < 0xD800 || u > 0xDFFF -> dec_ret 2 u
@@ -815,7 +817,7 @@ let get_utf_16le_uchar b i =
 let set_utf_16le_uchar b i u =
   let set = unsafe_set_uint16_le in
   let max = length b - 1 in
-  if i < 0 || i > max then invalid_arg "index out of bounds" else
+  if i < 0 || i > max then (invalid_arg[@alert "-exn"]) "index out of bounds" else
   match Uchar.to_int u with
   | u when u < 0 -> assert false
   | u when u <= 0xFFFF ->

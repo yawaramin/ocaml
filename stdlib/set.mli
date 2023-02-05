@@ -118,9 +118,9 @@ module type S =
         given to {!Set.Make}. *)
 
     val min_elt: t -> elt
+    [@@alert exn "Not_found if the set is empty"]
     (** Return the smallest element of the given set
-        (with respect to the [Ord.compare] ordering), or raise
-        [Not_found] if the set is empty. *)
+        (with respect to the [Ord.compare] ordering). *)
 
     val min_elt_opt: t -> elt option
     (** Return the smallest element of the given set
@@ -138,8 +138,8 @@ module type S =
         @since 4.05 *)
 
     val choose: t -> elt
-    (** Return one element of the given set, or raise [Not_found] if
-        the set is empty. Which element is chosen is unspecified,
+    [@@alert exn "Not_found if the set is empty"]
+    (** Return one element of the given set.  Which element is chosen is unspecified,
         but equal elements will be chosen for equal sets. *)
 
     val choose_opt: t -> elt option
@@ -151,9 +151,9 @@ module type S =
     (** {1:searching Searching} *)
 
         val find: elt -> t -> elt
+        [@@alert exn "Not_found if no such element found"]
     (** [find x s] returns the element of [s] equal to [x] (according
-        to [Ord.compare]), or raise [Not_found] if no such element
-        exists.
+        to [Ord.compare]).
         @since 4.01 *)
 
     val find_opt: elt -> t -> elt option
@@ -163,9 +163,9 @@ module type S =
         @since 4.05 *)
 
     val find_first: (elt -> bool) -> t -> elt
+    [@@alert exn "Not_found if no such element found"]
     (** [find_first f s], where [f] is a monotonically increasing function,
-        returns the lowest element [e] of [s] such that [f e],
-        or raises [Not_found] if no such element exists.
+        returns the lowest element [e] of [s] such that [f e].
 
         For example, [find_first (fun e -> Ord.compare e x >= 0) s] will
         return the first element [e] of [s] where [Ord.compare e x >= 0]
@@ -182,9 +182,9 @@ module type S =
        *)
 
     val find_last: (elt -> bool) -> t -> elt
+    [@@alert exn "Not_found if no such element found"]
     (** [find_last f s], where [f] is a monotonically decreasing function,
-        returns the highest element [e] of [s] such that [f e],
-        or raises [Not_found] if no such element exists.
+        returns the highest element [e] of [s] such that [f e].
         @since 4.05 *)
 
     val find_last_opt: (elt -> bool) -> t -> elt option

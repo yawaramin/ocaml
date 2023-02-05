@@ -19,6 +19,9 @@ open Scanf;;
 
 let all_tests_ok = ref true;;
 
+(* Explicitly turning off as this is a test helper module *)
+[@@@alert "-exn"]
+
 let finish () =
   match !all_tests_ok with
   | true ->

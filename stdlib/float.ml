@@ -188,7 +188,7 @@ module Array = struct
 
   let check a ofs len msg =
     if ofs < 0 || len < 0 || ofs + len < 0 || ofs + len > length a then
-      invalid_arg msg
+      (invalid_arg[@alert "-exn"]) msg
 
   let make n v =
     let result = create n in
@@ -196,7 +196,7 @@ module Array = struct
     result
 
   let init l f =
-    if l < 0 then invalid_arg "Float.Array.init"
+    if l < 0 then (invalid_arg[@alert "-exn"]) "Float.Array.init"
     else
       let res = create l in
       for i = 0 to l - 1 do
@@ -214,7 +214,7 @@ module Array = struct
 
   (* next 3 functions: modified copy of code from string.ml *)
   let ensure_ge (x:int) y =
-    if x >= y then x else invalid_arg "Float.Array.concat"
+    if x >= y then x else (invalid_arg[@alert "-exn"]) "Float.Array.concat"
 
   let rec sum_lengths acc = function
     | [] -> acc
@@ -256,7 +256,7 @@ module Array = struct
     unsafe_blit src sofs dst dofs len
 
   let to_list a =
-    List.init (length a) (unsafe_get a)
+    (List.init[@alert "-exn"]) (length a) (unsafe_get a)
 
   let of_list l =
     let result = create (List.length l) in
@@ -274,7 +274,7 @@ module Array = struct
   (* duplicated from array.ml *)
   let iter2 f a b =
     if length a <> length b then
-      invalid_arg "Float.Array.iter2: arrays must have the same length"
+      (invalid_arg[@alert "-exn"]) "Float.Array.iter2: arrays must have the same length"
     else
       for i = 0 to length a - 1 do f (unsafe_get a i) (unsafe_get b i) done
 
@@ -296,7 +296,7 @@ module Array = struct
     let la = length a in
     let lb = length b in
     if la <> lb then
-      invalid_arg "Float.Array.map2: arrays must have the same length"
+      (invalid_arg[@alert "-exn"]) "Float.Array.map2: arrays must have the same length"
     else begin
       let r = create la in
       for i = 0 to la - 1 do
@@ -435,7 +435,7 @@ module Array = struct
       end else
         if i31+1 < l && cmp (get a i31) (get a (i31+1)) < 0
         then i31+1
-        else if i31 < l then i31 else raise (Bottom i)
+        else if i31 < l then i31 else (raise[@alert "-exn"]) (Bottom i)
     in
     let rec trickledown l i e =
       let j = maxson l i in
@@ -454,7 +454,7 @@ module Array = struct
     in
     let bubble l i = try bubbledown l i with Bottom i -> i in
     let rec trickleup i e =
-      let father = (i - 1) / 3 in
+      let father = begin[@alert "-exn"] (i - 1) / 3 end in
       assert (i <> father);
       if cmp (get a father) e < 0 then begin
         set a i (get a father);
@@ -464,7 +464,7 @@ module Array = struct
       end;
     in
     let l = length a in
-    for i = (l + 1) / 3 - 1 downto 0 do trickle l i (get a i); done;
+    for i = begin[@alert "-exn"] (l + 1) / 3 end - 1 downto 0 do trickle l i (get a i); done;
     for i = l - 1 downto 2 do
       let e = (get a i) in
       set a i (get a 0);
@@ -508,7 +508,7 @@ module Array = struct
     in
     let rec sortto srcofs dst dstofs len =
       if len <= cutoff then isortto srcofs dst dstofs len else begin
-        let l1 = len / 2 in
+        let l1 = begin[@alert "-exn"] len / 2 end in
         let l2 = len - l1 in
         sortto (srcofs + l1) dst (dstofs + l1) l2;
         sortto srcofs a (srcofs + l2) l1;
@@ -517,7 +517,7 @@ module Array = struct
     in
     let l = length a in
     if l <= cutoff then isortto 0 a 0 l else begin
-      let l1 = l / 2 in
+      let l1 = begin[@alert "-exn"] l / 2 end in
       let l2 = l - l1 in
       let t = create l2 in
       sortto l1 t 0 l2;
@@ -568,7 +568,7 @@ module Array = struct
   let map_to_array f a =
     let l = length a in
     if l = 0 then [| |] else begin
-      let r = Array.make l (f (unsafe_get a 0)) in
+      let r = (Array.make[@alert "-exn"]) l (f (unsafe_get a 0)) in
       for i = 1 to l - 1 do
         Array.unsafe_set r i (f (unsafe_get a i))
       done;

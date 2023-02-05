@@ -48,6 +48,8 @@ val dummy_pos : position
 
 type lexbuf =
   { refill_buff : lexbuf -> unit;
+    (** @raise Invalid_argument if internal buffer would exceed max string length
+        @raise Sys_error if reading from channel fails *)
     mutable lex_buffer : bytes;
     mutable lex_buffer_len : int;
     mutable lex_abs_pos : int;

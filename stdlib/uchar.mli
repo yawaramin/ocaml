@@ -47,25 +47,22 @@ val rep : t
     @since 4.06 *)
 
 val succ : t -> t
+[@@alert exn "Invalid_argument if [u] is {!max}"]
 (** [succ u] is the scalar value after [u] in the set of Unicode scalar
-    values.
-
-    @raise Invalid_argument if [u] is {!max}. *)
+    values. *)
 
 val pred : t -> t
+[@@alert exn "Invalid_argument if [u] is {!min}"]
 (** [pred u] is the scalar value before [u] in the set of Unicode scalar
-    values.
-
-    @raise Invalid_argument if [u] is {!min}. *)
+    values. *)
 
 val is_valid : int -> bool
 (** [is_valid n] is [true] if and only if [n] is a Unicode scalar value
     (i.e. in the ranges [0x0000]...[0xD7FF] or [0xE000]...[0x10FFFF]).*)
 
 val of_int : int -> t
-(** [of_int i] is [i] as a Unicode character.
-
-    @raise Invalid_argument if [i] does not satisfy {!is_valid}. *)
+[@@alert exn "Invalid_argument if [i] does not satisfy {!is_valid}"]
+(** [of_int i] is [i] as a Unicode character. *)
 
 (**/**)
 val unsafe_of_int : int -> t
@@ -81,9 +78,8 @@ val of_char : char -> t
 (** [of_char c] is [c] as a Unicode character. *)
 
 val to_char : t -> char
-(** [to_char u] is [u] as an OCaml latin1 character.
-
-    @raise Invalid_argument if [u] does not satisfy {!is_char}. *)
+[@@alert exn "Invalid_argument if [u] does not satisfy {!is_char}"]
+(** [to_char u] is [u] as an OCaml latin1 character. *)
 
 (**/**)
 val unsafe_to_char : t -> char

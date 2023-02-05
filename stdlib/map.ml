@@ -36,16 +36,26 @@ module type S =
     val cardinal: 'a t -> int
     val bindings: 'a t -> (key * 'a) list
     val min_binding: 'a t -> (key * 'a)
+    [@@alert exn "Not_found if the map is empty"]
+
     val min_binding_opt: 'a t -> (key * 'a) option
     val max_binding: 'a t -> (key * 'a)
     val max_binding_opt: 'a t -> (key * 'a) option
     val choose: 'a t -> (key * 'a)
+    [@@alert exn "Not_found if the map is empty"]
+
     val choose_opt: 'a t -> (key * 'a) option
     val find: key -> 'a t -> 'a
+    [@@alert exn "Not_found if no binding for [x] exists"]
+
     val find_opt: key -> 'a t -> 'a option
     val find_first: (key -> bool) -> 'a t -> key * 'a
+    [@@alert exn "Not_found if no binding for [x] exists"]
+
     val find_first_opt: (key -> bool) -> 'a t -> (key * 'a) option
     val find_last: (key -> bool) -> 'a t -> key * 'a
+    [@@alert exn "Not_found if no such key exists"]
+
     val find_last_opt: (key -> bool) -> 'a t -> (key * 'a) option
     val iter: (key -> 'a -> unit) -> 'a t -> unit
     val fold: (key -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
@@ -91,7 +101,7 @@ module Make(Ord: OrderedType) = struct
     let bal l x d r =
       let hl = match l with Empty -> 0 | Node {h} -> h in
       let hr = match r with Empty -> 0 | Node {h} -> h in
-      if hl > hr + 2 then begin
+      if[@alert "-exn"] hl > hr + 2 then begin
         match l with
           Empty -> invalid_arg "Map.bal"
         | Node{l=ll; v=lv; d=ld; r=lr} ->
@@ -138,7 +148,7 @@ module Make(Ord: OrderedType) = struct
 
     let rec find x = function
         Empty ->
-          raise Not_found
+          (raise[@alert "-exn"]) Not_found
       | Node {l; v; d; r} ->
           let c = Ord.compare x v in
           if c = 0 then d
@@ -155,7 +165,7 @@ module Make(Ord: OrderedType) = struct
 
     let rec find_first f = function
         Empty ->
-          raise Not_found
+          (raise[@alert "-exn"]) Not_found
       | Node {l; v; d; r} ->
           if f v then
             find_first_aux v d f l
@@ -191,7 +201,7 @@ module Make(Ord: OrderedType) = struct
 
     let rec find_last f = function
         Empty ->
-          raise Not_found
+          (raise[@alert "-exn"]) Not_found
       | Node {l; v; d; r} ->
           if f v then
             find_last_aux v d f r
@@ -232,7 +242,7 @@ module Make(Ord: OrderedType) = struct
           c = 0 || mem x (if c < 0 then l else r)
 
     let rec min_binding = function
-        Empty -> raise Not_found
+        Empty -> (raise[@alert "-exn"]) Not_found
       | Node {l=Empty; v; d} -> (v, d)
       | Node {l} -> min_binding l
 
@@ -242,7 +252,7 @@ module Make(Ord: OrderedType) = struct
       | Node {l}-> min_binding_opt l
 
     let rec max_binding = function
-        Empty -> raise Not_found
+        Empty -> (raise[@alert "-exn"]) Not_found
       | Node {v; d; r=Empty} -> (v, d)
       | Node {r} -> max_binding r
 
@@ -252,7 +262,7 @@ module Make(Ord: OrderedType) = struct
       | Node {r} -> max_binding_opt r
 
     let rec remove_min_binding = function
-        Empty -> invalid_arg "Map.remove_min_elt"
+        Empty -> (invalid_arg[@alert "-exn"]) "Map.remove_min_elt"
       | Node {l=Empty; r} -> r
       | Node {l; v; d; r} -> bal (remove_min_binding l) v d r
 

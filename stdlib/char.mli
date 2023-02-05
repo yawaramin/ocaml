@@ -19,9 +19,8 @@ external code : char -> int = "%identity"
 (** Return the ASCII code of the argument. *)
 
 val chr : int -> char
-(** Return the character with the given ASCII code.
-   @raise Invalid_argument if the argument is
-   outside the range 0--255. *)
+[@@alert exn "Invalid_argument if the argument is outside the range 0--255"]
+(** Return the character with the given ASCII code. *)
 
 val escaped : char -> string
 (** Return a string representing the given character,

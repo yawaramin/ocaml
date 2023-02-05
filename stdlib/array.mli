@@ -34,23 +34,20 @@ external length : 'a array -> int = "%array_length"
 (** Return the length (number of elements) of the given array. *)
 
 external get : 'a array -> int -> 'a = "%array_safe_get"
+[@@alert exn "Invalid_argument if [n] is outside the range 0 to [(length a - 1)]"]
 (** [get a n] returns the element number [n] of array [a].
    The first element has number 0.
    The last element has number [length a - 1].
-   You can also write [a.(n)] instead of [get a n].
-
-   @raise Invalid_argument
-   if [n] is outside the range 0 to [(length a - 1)]. *)
+   You can also write [a.(n)] instead of [get a n]. *)
 
 external set : 'a array -> int -> 'a -> unit = "%array_safe_set"
+[@@alert exn "Invalid_argument if [n] is outside the range 0 to [length a - 1]"]
 (** [set a n x] modifies array [a] in place, replacing
    element number [n] with [x].
-   You can also write [a.(n) <- x] instead of [set a n x].
-
-   @raise Invalid_argument
-   if [n] is outside the range 0 to [length a - 1]. *)
+   You can also write [a.(n) <- x] instead of [set a n x]. *)
 
 external make : int -> 'a -> 'a array = "caml_make_vect"
+[@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_array_length]"]
 (** [make n x] returns a fresh array of length [n],
    initialized with [x].
    All the elements of this new array are initially
@@ -59,7 +56,6 @@ external make : int -> 'a -> 'a array = "caml_make_vect"
    of the array, and modifying [x] through one of the array entries
    will modify all other entries at the same time.
 
-   @raise Invalid_argument if [n < 0] or [n > Sys.max_array_length].
    If the value of [x] is a floating-point number, then the maximum
    size is only [Sys.max_array_length / 2].*)
 
@@ -69,16 +65,17 @@ external create_float: int -> float array = "caml_make_float_vect"
     @since 4.03 *)
 
 val init : int -> (int -> 'a) -> 'a array
+[@@alert exn "Invalid_argument if [n < 0] or [n > Sys.max_array_length]"]
 (** [init n f] returns a fresh array of length [n],
    with element number [i] initialized to the result of [f i].
    In other terms, [init n f] tabulates the results of [f]
    applied in order to the integers [0] to [n-1].
 
-   @raise Invalid_argument if [n < 0] or [n > Sys.max_array_length].
    If the return type of [f] is [float], then the maximum
    size is only [Sys.max_array_length / 2].*)
 
 val make_matrix : int -> int -> 'a -> 'a array array
+[@@alert exn "Invalid_argument if [dimx] or [dimy] is negative or greater than {!Sys.max_array_length}"]
 (** [make_matrix dimx dimy e] returns a two-dimensional array
    (an array of arrays) with first dimension [dimx] and
    second dimension [dimy]. All the elements of this new matrix
@@ -86,62 +83,50 @@ val make_matrix : int -> int -> 'a -> 'a array array
    The element ([x,y]) of a matrix [m] is accessed
    with the notation [m.(x).(y)].
 
-   @raise Invalid_argument if [dimx] or [dimy] is negative or
-   greater than {!Sys.max_array_length}.
    If the value of [e] is a floating-point number, then the maximum
    size is only [Sys.max_array_length / 2]. *)
 
 val append : 'a array -> 'a array -> 'a array
+[@@alert exn "Invalid_argument if [length v1 + length v2 > Sys.max_array_length]"]
 (** [append v1 v2] returns a fresh array containing the
-   concatenation of the arrays [v1] and [v2].
-   @raise Invalid_argument if
-   [length v1 + length v2 > Sys.max_array_length]. *)
+   concatenation of the arrays [v1] and [v2]. *)
 
 val concat : 'a array list -> 'a array
+[@@alert exn "Invalid_argument if [length(result) > Sys.max_array_length]"]
 (** Same as {!append}, but concatenates a list of arrays. *)
 
 val sub : 'a array -> int -> int -> 'a array
+[@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid subarray of [a]; that is, if [pos < 0], or [len < 0], or [pos + len > length a]"]
 (** [sub a pos len] returns a fresh array of length [len],
    containing the elements number [pos] to [pos + len - 1]
-   of array [a].
-
-   @raise Invalid_argument if [pos] and [len] do not
-   designate a valid subarray of [a]; that is, if
-   [pos < 0], or [len < 0], or [pos + len > length a]. *)
+   of array [a]. *)
 
 val copy : 'a array -> 'a array
 (** [copy a] returns a copy of [a], that is, a fresh array
    containing the same elements as [a]. *)
 
 val fill : 'a array -> int -> int -> 'a -> unit
+[@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid subarray of [a]"]
 (** [fill a pos len x] modifies the array [a] in place,
-   storing [x] in elements number [pos] to [pos + len - 1].
-
-   @raise Invalid_argument if [pos] and [len] do not
-   designate a valid subarray of [a]. *)
+   storing [x] in elements number [pos] to [pos + len - 1]. *)
 
 val blit :
   'a array -> int -> 'a array -> int -> int ->
     unit
+[@@alert exn "Invalid_argument if [src_pos] and [len] do not designate a valid subarray of [src], or if [dst_pos] and [len] do not designate a valid subarray of [dst]"]
 (** [blit src src_pos dst dst_pos len] copies [len] elements
    from array [src], starting at element number [src_pos], to array [dst],
    starting at element number [dst_pos]. It works correctly even if
    [src] and [dst] are the same array, and the source and
-   destination chunks overlap.
-
-   @raise Invalid_argument if [src_pos] and [len] do not
-   designate a valid subarray of [src], or if [dst_pos] and [len] do not
-   designate a valid subarray of [dst]. *)
+   destination chunks overlap. *)
 
 val to_list : 'a array -> 'a list
 (** [to_list a] returns the list of all the elements of [a]. *)
 
 val of_list : 'a list -> 'a array
+[@@alert exn "Invalid_argument if the length of [l] is greater than [Sys.max_array_length]"]
 (** [of_list l] returns a fresh array containing the elements
-   of [l].
-
-   @raise Invalid_argument if the length of [l] is greater than
-   [Sys.max_array_length]. *)
+   of [l]. *)
 
 (** {1 Iterators} *)
 
@@ -196,17 +181,17 @@ val fold_right : ('a -> 'acc -> 'acc) -> 'a array -> 'acc -> 'acc
 
 
 val iter2 : ('a -> 'b -> unit) -> 'a array -> 'b array -> unit
+[@@alert exn "Invalid_argument if the arrays are not the same size"]
 (** [iter2 f a b] applies function [f] to all the elements of [a]
    and [b].
-   @raise Invalid_argument if the arrays are not the same size.
    @since 4.03 (4.05 in ArrayLabels)
    *)
 
 val map2 : ('a -> 'b -> 'c) -> 'a array -> 'b array -> 'c array
+[@@alert exn "Invalid_argument if the arrays are not the same size"]
 (** [map2 f a b] applies function [f] to all the elements of [a]
    and [b], and builds an array with the results returned by [f]:
    [[| f a.(0) b.(0); ...; f a.(length a - 1) b.(length b - 1)|]].
-   @raise Invalid_argument if the arrays are not the same size.
    @since 4.03 (4.05 in ArrayLabels) *)
 
 
@@ -225,16 +210,17 @@ val exists : ('a -> bool) -> 'a array -> bool
     @since 4.03 *)
 
 val for_all2 : ('a -> 'b -> bool) -> 'a array -> 'b array -> bool
+[@@alert exn "Invalid_argument if the arrays are not the same size"]
 (** Same as {!for_all}, but for a two-argument predicate.
-   @raise Invalid_argument if the two arrays have different lengths.
    @since 4.11 *)
 
 val exists2 : ('a -> 'b -> bool) -> 'a array -> 'b array -> bool
+[@@alert exn "Invalid_argument if the arrays are not the same size"]
 (** Same as {!exists}, but for a two-argument predicate.
-   @raise Invalid_argument if the two arrays have different lengths.
    @since 4.11 *)
 
 val mem : 'a -> 'a array -> bool
+[@@alert exn "Invalid_argument on array of functions"]
 (** [mem a set] is true if and only if [a] is structurally equal
     to an element of [l] (i.e. there is an [x] in [l] such that
     [compare a x = 0]).
@@ -282,8 +268,8 @@ val split : ('a * 'b) array -> 'a array * 'b array
     @since 4.13 *)
 
 val combine : 'a array -> 'b array -> ('a * 'b) array
+[@@alert exn "Invalid_argument if the arrays are not the same size"]
 (** [combine [|a1; ...; an|] [|b1; ...; bn|]] is [[|(a1,b1); ...; (an,bn)|]].
-    Raise [Invalid_argument] if the two arrays have different lengths.
 
     @since 4.13 *)
 

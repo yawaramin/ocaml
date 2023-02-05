@@ -59,6 +59,7 @@ type extern_flags =
 (** The flags to the [Marshal.to_*] functions below. *)
 
 val to_channel : out_channel -> 'a -> extern_flags list -> unit
+[@@alert exn "Failure if [chan] is not in binary mode"]
 (** [Marshal.to_channel chan v flags] writes the representation
    of [v] on channel [chan]. The [flags] argument is a
    possibly empty list of flags that governs the marshaling
@@ -109,7 +110,6 @@ val to_channel : out_channel -> 'a -> extern_flags list -> unit
    when read back on a 32-bit platform.  The [Mashal.Compat_32] flag
    only matters when marshaling is performed on a 64-bit platform;
    it has no effect if marshaling is performed on a 32-bit platform.
-   @raise Failure if [chan] is not in binary mode.
  *)
 
 external to_bytes :
@@ -126,26 +126,24 @@ external to_string :
     a byte sequence. *)
 
 val to_buffer : bytes -> int -> int -> 'a -> extern_flags list -> int
+[@@alert exn "Failure if the byte representation of [v] does not fit in [len] characters"]
+[@@alert exn "Invalid_argument if substring out of bounds"]
 (** [Marshal.to_buffer buff ofs len v flags] marshals the value [v],
    storing its byte representation in the sequence [buff],
    starting at index [ofs], and writing at most
    [len] bytes.  It returns the number of bytes
-   actually written to the sequence. If the byte representation
-   of [v] does not fit in [len] characters, the exception [Failure]
-   is raised. *)
+   actually written to the sequence. *)
 
 val from_channel : in_channel -> 'a
+[@@alert exn "End_of_file if [chan] is already at the end of the file"]
+[@@alert exn "Failure if the end of the file is reached during unmarshalling itself or if [chan] is not in binary mode"]
 (** [Marshal.from_channel chan] reads from channel [chan] the
    byte representation of a structured value, as produced by
    one of the [Marshal.to_*] functions, and reconstructs and
-   returns the corresponding value.
-
-   @raise End_of_file if [chan] is already at the end of the file.
-
-   @raise Failure if the end of the file is reached during
-   unmarshalling itself or if [chan] is not in binary mode.*)
+   returns the corresponding value. *)
 
 val from_bytes : bytes -> int -> 'a
+[@@alert exn "Invalid_argument if [ofs] out of bounds"]
 (** [Marshal.from_bytes buff ofs] unmarshals a structured value
    like {!Marshal.from_channel} does, except that the byte
    representation is not read from a channel, but taken from
@@ -167,8 +165,6 @@ val header_size : int
    [buff] starting at position [ofs].
    Finally, {!Marshal.total_size} [buff ofs] is the total size,
    in bytes, of the marshaled value.
-   Both {!Marshal.data_size} and {!Marshal.total_size} raise [Failure]
-   if [buff], [ofs] does not contain a valid header.
 
    To read the byte representation of a marshaled value into
    a byte sequence, the program needs to read first
@@ -180,7 +176,10 @@ val header_size : int
    to unmarshal the value. *)
 
 val data_size : bytes -> int -> int
+[@@alert exn "Failure if [buff], [ofs] does not contain a valid header"]
+[@@alert exn "Invalid_argument if [ofs] out of bounds"]
 (** See {!Marshal.header_size}.*)
 
 val total_size : bytes -> int -> int
+[@@alert exn "Failure if [buff], [ofs] does not contain a valid header"]
 (** See {!Marshal.header_size}.*)

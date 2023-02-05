@@ -104,6 +104,8 @@ module Extension_constructor :
 sig
   type t = extension_constructor
   val of_val : 'a -> t
+  [@@alert exn "Invalid_argument"]
+
   val [@inline always] name : t -> string
   val [@inline always] id : t -> int
 end
@@ -118,26 +120,31 @@ module Ephemeron: sig
   (** an ephemeron cf {!Ephemeron} *)
 
   val create: int -> t
+  [@@alert exn "Invalid_argument if [n] is not between [0] and {!max_ephe_length} (inclusive)"]
   (** [create n] returns an ephemeron with [n] keys.
       All the keys and the data are initially empty.
-      The argument [n] must be between zero
-      and {!max_ephe_length} (limits included).
   *)
 
   val length: t -> int
   (** return the number of keys *)
 
   val get_key: t -> int -> obj_t option
+  [@@alert exn "Invalid_argument if invalid offset"]
 
   val get_key_copy: t -> int -> obj_t option
+  [@@alert exn "Invalid_argument if invalid offset"]
 
   val set_key: t -> int -> obj_t -> unit
+  [@@alert exn "Invalid_argument if invalid offset"]
 
   val unset_key: t -> int -> unit
+  [@@alert exn "Invalid_argument if invalid offset"]
 
   val check_key: t -> int -> bool
+  [@@alert exn "Invalid_argument if invalid offset"]
 
   val blit_key : t -> int -> t -> int -> int -> unit
+  [@@alert exn "Invalid_argument if offsets or lengths invalid"]
 
   val get_data: t -> obj_t option
 

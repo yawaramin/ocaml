@@ -28,6 +28,7 @@ val dir_sep : string
     @since 3.11.2 *)
 
 val concat : string -> string -> string
+[@@alert exn "Invalid_argument if the result is longer than {!Sys.max_string_length} bytes"]
 (** [concat dir file] returns a file name that designates file
    [file] in directory [dir]. *)
 
@@ -52,10 +53,9 @@ val check_suffix : string -> string -> bool
     filename equivalence from Windows.  *)
 
 val chop_suffix : string -> string -> string
+[@@alert exn "Invalid_argument if [name] does not end with the suffix [suff]"]
 (** [chop_suffix name suff] removes the suffix [suff] from
-    the filename [name].
-    @raise Invalid_argument if [name] does not end with the suffix [suff].
-*)
+    the filename [name]. *)
 
 val chop_suffix_opt: suffix:string -> string -> string option
 (** [chop_suffix_opt ~suffix filename] removes the suffix from
@@ -99,6 +99,7 @@ val remove_extension : string -> string
 *)
 
 val chop_extension : string -> string
+[@@alert exn "Invalid_argument if the given name has an empty extension"]
 (** Same as {!Filename.remove_extension}, but raise [Invalid_argument]
     if the given name has an empty extension. *)
 
@@ -126,6 +127,7 @@ val null : string
     @since 4.10 *)
 
 val temp_file : ?temp_dir: string -> string -> string -> string
+[@@alert exn "Sys_error if the file could not be created"]
 (** [temp_file prefix suffix] returns the name of a
    fresh temporary file in the temporary directory.
    The base name of the temporary file is formed by concatenating
@@ -136,13 +138,13 @@ val temp_file : ?temp_dir: string -> string -> string -> string
    (readable and writable only by the file owner).  The file is
    guaranteed to be different from any other file that existed when
    [temp_file] was called.
-   @raise Sys_error if the file could not be created.
    @before 3.11.2 no ?temp_dir optional argument
 *)
 
 val open_temp_file :
       ?mode: open_flag list -> ?perms: int -> ?temp_dir: string -> string ->
       string -> string * out_channel
+[@@alert exn "Sys_error if the file could not be opened"]
 (** Same as {!Filename.temp_file}, but returns both the name of a fresh
    temporary file, and an output channel opened (atomically) on
    this file.  This function is more secure than [temp_file]: there
@@ -154,12 +156,12 @@ val open_temp_file :
    file is created with permissions [perms] (defaults to readable and
    writable only by the file owner, [0o600]).
 
-   @raise Sys_error if the file could not be opened.
    @before 4.03 no ?perms optional argument
    @before 3.11.2 no ?temp_dir optional argument
 *)
 
 val temp_dir : ?temp_dir: string -> ?perms:int  -> string -> string -> string
+[@@alert exn "Sys_error if the directory could not be created"]
 (** [temp_dir prefix suffix] creates and returns the name of a fresh
    temporary directory with permissions [perms] (defaults to 0o700)
    inside [temp_dir].  The base name of the temporary directory is
@@ -175,7 +177,6 @@ val temp_dir : ?temp_dir: string -> ?perms:int  -> string -> string -> string
    If temp_dir does not exist, this function does not create it.  Instead,
    it raises Sys_error.
 
-   @raise Sys_error if the directory could not be created.
    @since 5.1
 *)
 
@@ -198,6 +199,7 @@ val set_temp_dir_name : string -> unit
 *)
 
 val quote : string -> string
+[@@alert exn "Failure if the file name or its quoted version exceed {!Sys.max_string_length}"]
 (** Return a quoted version of a file name, suitable for use as
     one argument in a command line, escaping all meta-characters.
     Warning: under Windows, the output is only suitable for use
@@ -208,6 +210,8 @@ val quote : string -> string
 val quote_command :
        string -> ?stdin:string -> ?stdout:string -> ?stderr:string
               -> string list -> string
+[@@alert exn "Failure if the command cannot be escaped on the current platform"]
+[@@alert exn "Failure if the command or its quoted version exceed {!Sys.max_string_length}"]
 (** [quote_command cmd args] returns a quoted command line, suitable
     for use as an argument to {!Sys.command}, {!Unix.system}, and the
     {!Unix.open_process} functions.
@@ -233,6 +237,5 @@ val quote_command :
     if any are quoted using {!Filename.quote}, then concatenated.
     Under Win32, additional quoting is performed as required by the
     [cmd.exe] shell that is called by {!Sys.command}.
-    @raise Failure if the command cannot be escaped on the current platform.
     @since 4.10
 *)

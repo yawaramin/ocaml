@@ -27,28 +27,30 @@ let length l = length_aux 0 l
 let cons a l = a::l
 
 let hd = function
-    [] -> failwith "hd"
+    [] -> (failwith[@alert "-exn"]) "hd"
   | a::_ -> a
 
 let tl = function
-    [] -> failwith "tl"
+    [] -> (failwith[@alert "-exn"]) "tl"
   | _::l -> l
 
 let nth l n =
-  if n < 0 then invalid_arg "List.nth" else
+  if n < 0 then (invalid_arg[@alert "-exn"]) "List.nth" else
   let rec nth_aux l n =
     match l with
-    | [] -> failwith "nth"
+    | [] -> (failwith[@alert "-exn"]) "nth"
     | a::l -> if n = 0 then a else nth_aux l (n-1)
   in nth_aux l n
 
 let nth_opt l n =
+  begin[@alert "-exn"]
   if n < 0 then invalid_arg "List.nth" else
   let rec nth_aux l n =
     match l with
     | [] -> None
     | a::l -> if n = 0 then Some a else nth_aux l (n-1)
   in nth_aux l n
+  end
 
 let append = (@)
 
@@ -68,7 +70,7 @@ let[@tail_mod_cons] rec init i last f =
     r1 :: r2 :: init (i+2) last f
 
 let init len f =
-  if len < 0 then invalid_arg "List.init" else
+  if len < 0 then (invalid_arg[@alert "-exn"]) "List.init" else
   init 0 (len - 1) f
 
 let rec flatten = function
@@ -137,14 +139,14 @@ let[@tail_mod_cons] rec map2 f l1 l2 =
       let r1 = f a1 b1 in
       let r2 = f a2 b2 in
       r1::r2::map2 f l1 l2
-  | (_, _) -> invalid_arg "List.map2"
+  | (_, _) -> (invalid_arg[@alert "-exn"]) "List.map2"
 
 let rev_map2 f l1 l2 =
   let rec rmap2_f accu l1 l2 =
     match (l1, l2) with
     | ([], []) -> accu
     | (a1::l1, a2::l2) -> rmap2_f (f a1 a2 :: accu) l1 l2
-    | (_, _) -> invalid_arg "List.rev_map2"
+    | (_, _) -> (invalid_arg[@alert "-exn"]) "List.rev_map2"
   in
   rmap2_f [] l1 l2
 
@@ -153,19 +155,19 @@ let rec iter2 f l1 l2 =
   match (l1, l2) with
     ([], []) -> ()
   | (a1::l1, a2::l2) -> f a1 a2; iter2 f l1 l2
-  | (_, _) -> invalid_arg "List.iter2"
+  | (_, _) -> (invalid_arg[@alert "-exn"]) "List.iter2"
 
 let rec fold_left2 f accu l1 l2 =
   match (l1, l2) with
     ([], []) -> accu
   | (a1::l1, a2::l2) -> fold_left2 f (f accu a1 a2) l1 l2
-  | (_, _) -> invalid_arg "List.fold_left2"
+  | (_, _) -> (invalid_arg[@alert "-exn"]) "List.fold_left2"
 
 let rec fold_right2 f l1 l2 accu =
   match (l1, l2) with
     ([], []) -> accu
   | (a1::l1, a2::l2) -> f a1 a2 (fold_right2 f l1 l2 accu)
-  | (_, _) -> invalid_arg "List.fold_right2"
+  | (_, _) -> (invalid_arg[@alert "-exn"]) "List.fold_right2"
 
 let rec for_all p = function
     [] -> true
@@ -179,13 +181,13 @@ let rec for_all2 p l1 l2 =
   match (l1, l2) with
     ([], []) -> true
   | (a1::l1, a2::l2) -> p a1 a2 && for_all2 p l1 l2
-  | (_, _) -> invalid_arg "List.for_all2"
+  | (_, _) -> (invalid_arg[@alert "-exn"]) "List.for_all2"
 
 let rec exists2 p l1 l2 =
   match (l1, l2) with
     ([], []) -> false
   | (a1::l1, a2::l2) -> p a1 a2 || exists2 p l1 l2
-  | (_, _) -> invalid_arg "List.exists2"
+  | (_, _) -> (invalid_arg[@alert "-exn"]) "List.exists2"
 
 let rec mem x = function
     [] -> false
@@ -196,7 +198,7 @@ let rec memq x = function
   | a::l -> a == x || memq x l
 
 let rec assoc x = function
-    [] -> raise Not_found
+    [] -> (raise[@alert "-exn"]) Not_found
   | (a,b)::l -> if compare a x = 0 then b else assoc x l
 
 let rec assoc_opt x = function
@@ -204,7 +206,7 @@ let rec assoc_opt x = function
   | (a,b)::l -> if compare a x = 0 then Some b else assoc_opt x l
 
 let rec assq x = function
-    [] -> raise Not_found
+    [] -> (raise[@alert "-exn"]) Not_found
   | (a,b)::l -> if a == x then b else assq x l
 
 let rec assq_opt x = function
@@ -229,7 +231,7 @@ let rec remove_assq x = function
   | (a, _ as pair) :: l -> if a == x then l else pair :: remove_assq x l
 
 let rec find p = function
-  | [] -> raise Not_found
+  | [] -> (raise[@alert "-exn"]) Not_found
   | x :: l -> if p x then x else find p l
 
 let rec find_opt p = function
@@ -323,7 +325,7 @@ let rec combine l1 l2 =
   match (l1, l2) with
     ([], []) -> []
   | (a1::l1, a2::l2) -> (a1, a2) :: combine l1 l2
-  | (_, _) -> invalid_arg "List.combine"
+  | (_, _) -> (invalid_arg[@alert "-exn"]) "List.combine"
 
 (** sorting *)
 
@@ -531,8 +533,7 @@ let rec compare_lengths l1 l2 =
   | _, [] -> 1
   | _ :: l1, _ :: l2 -> compare_lengths l1 l2
 
-let rec compare_length_with l n =
-  match l with
+let rec compare_length_with l n = match l with
   | [] ->
     if n = 0 then 0 else
       if n > 0 then -1 else 1

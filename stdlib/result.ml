@@ -18,8 +18,8 @@ type ('a, 'e) t = ('a, 'e) result = Ok of 'a | Error of 'e
 let ok v = Ok v
 let error e = Error e
 let value r ~default = match r with Ok v -> v | Error _ -> default
-let get_ok = function Ok v -> v | Error _ -> invalid_arg "result is Error _"
-let get_error = function Error e -> e | Ok _ -> invalid_arg "result is Ok _"
+let get_ok = function Ok v -> v | Error _ -> (invalid_arg[@alert "-exn"]) "result is Error _"
+let get_error = function Error e -> e | Ok _ -> (invalid_arg[@alert "-exn"]) "result is Ok _"
 let bind r f = match r with Ok v -> f v | Error _ as e -> e
 let join = function Ok r -> r | Error _ as e -> e
 let map f = function Ok v -> Ok (f v) | Error _ as e -> e

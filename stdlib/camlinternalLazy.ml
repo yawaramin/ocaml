@@ -51,9 +51,9 @@ let do_force_block blk =
     update_to_forward b;
     result
   with e ->
-    Obj.set_field b 0 (Obj.repr (fun () -> raise e));
+    Obj.set_field b 0 (Obj.repr (fun () -> (raise[@alert "-exn"]) e));
     reset_to_lazy b;
-    raise e
+    (raise[@alert "-exn"]) e
 
 (* Assumes [blk] is a block with tag forcing *)
 let do_force_val_block blk =
@@ -72,7 +72,7 @@ let force_gen_lazy_block ~only_val (blk : 'arg lazy_t) =
   match update_to_forcing (Obj.repr blk) with
   | 0 when only_val -> do_force_val_block blk
   | 0 -> do_force_block blk
-  | _ -> raise Undefined
+  | _ -> (raise[@alert "-exn"]) Undefined
 
 (* used in the %lazy_force primitive *)
 let force_lazy_block blk = force_gen_lazy_block ~only_val:false blk
@@ -100,6 +100,6 @@ let force_gen ~only_val (lzv : 'arg lazy_t) =
   if t = Obj.forward_tag then
     (Obj.obj (Obj.field x 0) : 'arg)
   (* END no safe points *)
-  else if t = Obj.forcing_tag then raise Undefined
+  else if t = Obj.forcing_tag then (raise[@alert "-exn"]) Undefined
   else if t <> Obj.lazy_tag then (Obj.obj x : 'arg)
   else force_gen_lazy_block ~only_val lzv

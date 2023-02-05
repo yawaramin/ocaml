@@ -76,11 +76,8 @@ val with_open_gen : open_flag list -> int -> string -> (t -> 'a) -> 'a
     in case the file must be created (see {!open_gen}). *)
 
 val close : t -> unit
-(** Close the given channel, flushing all buffered write operations.  Output
-    functions raise a [Sys_error] exception when they are applied to a closed
-    output channel, except {!close} and {!flush}, which do nothing when applied
-    to an already closed channel.  Note that {!close} may raise [Sys_error] if
-    the operating system signals an error when flushing or closing. *)
+[@@alert exn "Sys_error if the operating system signals an error when flushing or closing"]
+(** Close the given channel, flushing all buffered write operations. *)
 
 val close_noerr : t -> unit
 (** Same as {!close}, but ignore all errors. *)
@@ -88,28 +85,32 @@ val close_noerr : t -> unit
 (** {1:output Output} *)
 
 val output_char : t -> char -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** Write the character on the given output channel. *)
 
 val output_byte : t -> int -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** Write one 8-bit integer (as the single character with that code) on the
     given output channel. The given integer is taken modulo 256. *)
 
 val output_string : t -> string -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** Write the string on the given output channel. *)
 
 val output_bytes : t -> bytes -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** Write the byte sequence on the given output channel. *)
 
 (** {1:advanced_output Advanced output} *)
 
 val output : t -> bytes -> int -> int -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
+[@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid range of [buf]"]
 (** [output oc buf pos len] writes [len] characters from byte sequence [buf],
-    starting at offset [pos], to the given output channel [oc].
-
-    @raise Invalid_argument if [pos] and [len] do not designate a valid range of
-    [buf]. *)
+    starting at offset [pos], to the given output channel [oc]. *)
 
 val output_substring : t -> string -> int -> int -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** Same as {!output} but take a string as argument instead of a byte
     sequence. *)
 
@@ -126,11 +127,13 @@ val flush_all : unit -> unit
 (** {1:seeking Seeking} *)
 
 val seek : t -> int64 -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** [seek chan pos] sets the current writing position to [pos] for channel
     [chan]. This works only for regular files. On files of other kinds (such as
     terminals, pipes and sockets), the behavior is unspecified. *)
 
 val pos : t -> int64
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** Return the current writing position for the given channel.  Does not work on
     channels opened with the [Open_append] flag (returns unspecified results).
 
@@ -143,12 +146,14 @@ val pos : t -> int64
 (** {1:attributes Attributes}  *)
 
 val length : t -> int64
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** Return the size (number of characters) of the regular file on which the
     given channel is opened.  If the channel is opened on a file that is not a
     regular file, the result is meaningless. *)
 
 
 val set_binary_mode : t -> bool -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** [set_binary_mode oc true] sets the channel [oc] to binary mode: no
     translations take place during output.
 
@@ -161,6 +166,7 @@ val set_binary_mode : t -> bool -> unit
     between text mode and binary mode. *)
 
 val set_buffered : t -> bool -> unit
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** [set_buffered oc true] sets the channel [oc] to {e buffered} mode. In this
     mode, data output on [oc] will be buffered until either the internal buffer
     is full or the function {!flush} or {!flush_all} is called, at which point
@@ -173,10 +179,12 @@ val set_buffered : t -> bool -> unit
     All channels are open in {e buffered} mode by default. *)
 
 val is_buffered : t -> bool
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** [is_buffered oc] returns whether the channel [oc] is buffered (see
     {!set_buffered}). *)
 
 val isatty : t -> bool
+[@@alert exn "Sys_error if applied to a closed output channel"]
 (** [isatty oc] is [true] if [oc] refers to a terminal or console window,
     [false] otherwise.
 

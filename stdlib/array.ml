@@ -46,7 +46,7 @@ end
 
 let init l f =
   if l = 0 then [||] else
-  if l < 0 then invalid_arg "Array.init"
+  if l < 0 then (invalid_arg[@alert "-exn"]) "Array.init"
   (* See #6575. We could also check for maximum array size, but this depends
      on whether we create a float array or a regular one... *)
   else
@@ -74,18 +74,18 @@ let append a1 a2 =
 
 let sub a ofs len =
   if ofs < 0 || len < 0 || ofs > length a - len
-  then invalid_arg "Array.sub"
+  then (invalid_arg[@alert "-exn"]) "Array.sub"
   else unsafe_sub a ofs len
 
 let fill a ofs len v =
   if ofs < 0 || len < 0 || ofs > length a - len
-  then invalid_arg "Array.fill"
+  then (invalid_arg[@alert "-exn"]) "Array.fill"
   else unsafe_fill a ofs len v
 
 let blit a1 ofs1 a2 ofs2 len =
   if len < 0 || ofs1 < 0 || ofs1 > length a1 - len
              || ofs2 < 0 || ofs2 > length a2 - len
-  then invalid_arg "Array.blit"
+  then (invalid_arg[@alert "-exn"]) "Array.blit"
   else unsafe_blit a1 ofs1 a2 ofs2 len
 
 let iter f a =
@@ -93,7 +93,7 @@ let iter f a =
 
 let iter2 f a b =
   if length a <> length b then
-    invalid_arg "Array.iter2: arrays must have the same length"
+    (invalid_arg[@alert "-exn"]) "Array.iter2: arrays must have the same length"
   else
     for i = 0 to length a - 1 do f (unsafe_get a i) (unsafe_get b i) done
 
@@ -121,7 +121,7 @@ let map2 f a b =
   let la = length a in
   let lb = length b in
   if la <> lb then
-    invalid_arg "Array.map2: arrays must have the same length"
+    (invalid_arg[@alert "-exn"]) "Array.map2: arrays must have the same length"
   else begin
     if la = 0 then [||] else begin
       let r = create la (f (unsafe_get a 0) (unsafe_get b 0)) in
@@ -211,7 +211,7 @@ let for_all p a =
 let for_all2 p l1 l2 =
   let n1 = length l1
   and n2 = length l2 in
-  if n1 <> n2 then invalid_arg "Array.for_all2"
+  if n1 <> n2 then (invalid_arg[@alert "-exn"]) "Array.for_all2"
   else let rec loop i =
     if i = n1 then true
     else if p (unsafe_get l1 i) (unsafe_get l2 i) then loop (succ i)
@@ -221,7 +221,7 @@ let for_all2 p l1 l2 =
 let exists2 p l1 l2 =
   let n1 = length l1
   and n2 = length l2 in
-  if n1 <> n2 then invalid_arg "Array.exists2"
+  if n1 <> n2 then (invalid_arg[@alert "-exn"]) "Array.exists2"
   else let rec loop i =
     if i = n1 then false
     else if p (unsafe_get l1 i) (unsafe_get l2 i) then true
@@ -303,7 +303,7 @@ let split x =
 let combine a b =
   let na = length a in
   let nb = length b in
-  if na <> nb then invalid_arg "Array.combine";
+  if na <> nb then (invalid_arg[@alert "-exn"]) "Array.combine";
   if na = 0 then [||]
   else begin
     let x = create na (unsafe_get a 0, unsafe_get b 0) in
@@ -325,7 +325,7 @@ let sort cmp a =
     end else
       if i31+1 < l && cmp (get a i31) (get a (i31+1)) < 0
       then i31+1
-      else if i31 < l then i31 else raise (Bottom i)
+      else if i31 < l then i31 else (raise[@alert "-exn"]) (Bottom i)
   in
   let rec trickledown l i e =
     let j = maxson l i in
@@ -344,7 +344,7 @@ let sort cmp a =
   in
   let bubble l i = try bubbledown l i with Bottom i -> i in
   let rec trickleup i e =
-    let father = (i - 1) / 3 in
+    let father = begin[@alert "-exn"] (i - 1) / 3 end in
     assert (i <> father);
     if cmp (get a father) e < 0 then begin
       set a i (get a father);
@@ -354,7 +354,7 @@ let sort cmp a =
     end;
   in
   let l = length a in
-  for i = (l + 1) / 3 - 1 downto 0 do trickle l i (get a i); done;
+  for i = begin[@alert "-exn"] (l + 1) / 3 end - 1 downto 0 do trickle l i (get a i); done;
   for i = l - 1 downto 2 do
     let e = (get a i) in
     set a i (get a 0);
@@ -398,7 +398,7 @@ let stable_sort cmp a =
   in
   let rec sortto srcofs dst dstofs len =
     if len <= cutoff then isortto srcofs dst dstofs len else begin
-      let l1 = len / 2 in
+      let l1 = begin[@alert "-exn"] len / 2 end in
       let l2 = len - l1 in
       sortto (srcofs + l1) dst (dstofs + l1) l2;
       sortto srcofs a (srcofs + l2) l1;
@@ -407,7 +407,7 @@ let stable_sort cmp a =
   in
   let l = length a in
   if l <= cutoff then isortto 0 a 0 l else begin
-    let l1 = l / 2 in
+    let l1 = begin[@alert "-exn"] l / 2 end in
     let l2 = l - l1 in
     let t = make l2 (get a 0) in
     sortto l1 t 0 l2;

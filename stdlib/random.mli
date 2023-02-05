@@ -48,11 +48,13 @@ val bits : unit -> int
 *)
 
 val int : int -> int
+[@@alert exn "Invalid_argument if [bound] <= 0 or [bound] > 2^{30}"]
 (** [Random.int bound] returns a random integer between 0 (inclusive)
      and [bound] (exclusive).  [bound] must be greater than 0 and less
      than 2{^30}. *)
 
 val full_int : int -> int
+[@@alert exn "Invalid_argument if [bound] <= 0"]
 (** [Random.full_int bound] returns a random integer between 0 (inclusive)
      and [bound] (exclusive). [bound] may be any positive integer.
 
@@ -64,6 +66,7 @@ val full_int : int -> int
     @since 4.13 *)
 
 val int32 : Int32.t -> Int32.t
+[@@alert exn "Invalid_argument if [bound] <= 0"]
 (** [Random.int32 bound] returns a random integer between 0 (inclusive)
      and [bound] (exclusive).  [bound] must be greater than 0. *)
 
@@ -72,6 +75,7 @@ val nativeint : Nativeint.t -> Nativeint.t
      and [bound] (exclusive).  [bound] must be greater than 0. *)
 
 val int64 : Int64.t -> Int64.t
+[@@alert exn "Invalid_argument if [bound] <= 0"]
 (** [Random.int64 bound] returns a random integer between 0 (inclusive)
      and [bound] (exclusive).  [bound] must be greater than 0. *)
 
@@ -161,12 +165,11 @@ module State : sig
   *)
 
   val of_binary_string : string -> t
+  [@@alert exn "Failure if the input is not in the expected format"]
   (** Deserializes a byte sequence obtained by calling
       {!to_binary_string}. The resulting PRNG state will produce the
       same random numbers as the state that was passed as input to
       {!to_binary_string}.
-
-      @raise Failure if the input is not in the expected format.
 
       Note that the serialization format may differ across OCaml
       versions.

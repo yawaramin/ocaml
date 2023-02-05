@@ -28,7 +28,7 @@ let push x s = s.c <- x :: s.c; s.len <- s.len + 1
 let pop s =
   match s.c with
   | hd::tl -> s.c <- tl; s.len <- s.len - 1; hd
-  | []     -> raise Empty
+  | []     -> (raise[@alert "-exn"]) Empty
 
 let pop_opt s =
   match s.c with
@@ -38,12 +38,12 @@ let pop_opt s =
 let drop s =
   match s.c with
   | _hd::tl -> s.c <- tl; s.len <- s.len - 1
-  | [] -> raise Empty
+  | [] -> (raise[@alert "-exn"]) Empty
 
 let top s =
   match s.c with
   | hd::_ -> hd
-  | []    -> raise Empty
+  | []    -> (raise[@alert "-exn"]) Empty
 
 let top_opt s =
   match s.c with

@@ -56,7 +56,7 @@ module Deep = struct
 
   let continue k v = resume (take_cont_noexc k) (fun x -> x) v
 
-  let discontinue k e = resume (take_cont_noexc k) (fun e -> raise e) e
+  let discontinue k e = resume (take_cont_noexc k) (raise[@alert "-exn"]) e
 
   let discontinue_with_backtrace k e bt = resume (take_cont_noexc k) (fun e ->
     Printexc.raise_with_backtrace e bt) e
@@ -87,7 +87,7 @@ module Deep = struct
       | Some f -> f k
       | None -> reperform eff k last_fiber
     in
-    let s = alloc_stack (fun x -> x) (fun e -> raise e) effc' in
+    let s = alloc_stack (fun x -> x) (raise[@alert "-exn"]) effc' in
     runstack s comp arg
 
   external get_callstack :
@@ -111,7 +111,7 @@ module Shallow = struct
     let module M = struct type _ t += Initial_setup__ : a t end in
     let exception E of (a,b) continuation in
     let f' () = f (perform M.Initial_setup__) in
-    let error _ = failwith "impossible" in
+    let error _ = (failwith[@alert "-exn"]) "impossible" in
     let effc eff k _last_fiber =
       match eff with
       | M.Initial_setup__ -> raise_notrace (E k)
@@ -150,7 +150,7 @@ module Shallow = struct
     continue_gen k (fun x -> x) v handler
 
   let discontinue_with k v handler =
-    continue_gen k (fun e -> raise e) v handler
+    continue_gen k (raise[@alert "-exn"]) v handler
 
   let discontinue_with_backtrace k v bt handler =
     continue_gen k (fun e -> Printexc.raise_with_backtrace e bt) v handler

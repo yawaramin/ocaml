@@ -49,13 +49,12 @@ val self : unit -> id
 (** [self ()] is the identifier of the currently running domain *)
 
 val before_first_spawn : (unit -> unit) -> unit
+[@@alert exn "Invalid_argument if the program has already spawned a domain"]
 (** [before_first_spawn f] registers [f] to be called before the first domain
     is spawned by the program. The functions registered with
     [before_first_spawn] are called on the main (initial) domain. The functions
     registered with [before_first_spawn] are called in 'first in, first out'
-    order: the oldest function added with [before_first_spawn] is called first.
-
-    @raise Invalid_argument if the program has already spawned a domain. *)
+    order: the oldest function added with [before_first_spawn] is called first. *)
 
 val at_exit : (unit -> unit) -> unit
 (** [at_exit f] registers [f] to be called when the current domain exits. Note

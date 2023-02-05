@@ -38,33 +38,32 @@ type t =
    before any further addition. *)
 
 let create n =
- let n = if n < 1 then 1 else n in
- let n = if n > Sys.max_string_length then Sys.max_string_length else n in
- let s = Bytes.create n in
+ let n = max 1 (min n Sys.max_string_length) in
+ let s = (Bytes.create[@alert "-exn"]) n in
  { inner = { buffer = s; length = n}; position = 0; initial_buffer = s}
 
 let contents b = Bytes.sub_string b.inner.buffer 0 b.position
-let to_bytes b = Bytes.sub b.inner.buffer 0 b.position
+let to_bytes b = (Bytes.sub[@alert "-exn"]) b.inner.buffer 0 b.position
 
 let sub b ofs len =
   if ofs < 0 || len < 0 || ofs > b.position - len
-  then invalid_arg "Buffer.sub"
+  then (invalid_arg[@alert "-exn"]) "Buffer.sub"
   else Bytes.sub_string b.inner.buffer ofs len
 
 
 let blit src srcoff dst dstoff len =
   if len < 0 || srcoff < 0 || srcoff > src.position - len
              || dstoff < 0 || dstoff > (Bytes.length dst) - len
-  then invalid_arg "Buffer.blit"
+  then (invalid_arg[@alert "-exn"]) "Buffer.blit"
   else
-    Bytes.blit src.inner.buffer srcoff dst dstoff len
+    (Bytes.blit[@alert "-exn"]) src.inner.buffer srcoff dst dstoff len
 
 
 let nth b ofs =
   let position = b.position in
   let {buffer;length} = b.inner in
   if ofs < 0 || ofs >= position || position > length then
-   invalid_arg "Buffer.nth"
+   (invalid_arg[@alert "-exn"]) "Buffer.nth"
   else Bytes.unsafe_get buffer ofs
 
 
@@ -91,12 +90,12 @@ let resize b more =
   if !new_len > Sys.max_string_length then begin
     if old_pos + more <= Sys.max_string_length
     then new_len := Sys.max_string_length
-    else failwith "Buffer.add: cannot grow buffer"
+    else (failwith[@alert "-exn"]) "Buffer.add: cannot grow buffer"
   end;
-  let new_buffer = Bytes.create !new_len in
+  let new_buffer = (Bytes.create[@alert "-exn"]) !new_len in
   (* PR#6148: let's keep using [blit] rather than [unsafe_blit] in
      this tricky function that is slow anyway. *)
-  Bytes.blit b.inner.buffer 0 new_buffer 0 b.position;
+  (Bytes.blit[@alert "-exn"]) b.inner.buffer 0 new_buffer 0 b.position;
   b.inner <- { buffer = new_buffer; length = !new_len }
 
 (* Note:
@@ -114,7 +113,7 @@ let add_char b c =
   let {buffer;length} = b.inner in
   if pos >= length then (
     resize b 1;
-    Bytes.set b.inner.buffer b.position c
+    (Bytes.set[@alert "-exn"]) b.inner.buffer b.position c
   ) else
     Bytes.unsafe_set buffer pos c;
   b.position <- pos + 1
@@ -133,7 +132,7 @@ let rec add_utf_8_uchar b u =
 let rec add_utf_16be_uchar b u =
   let pos = b.position in
   if pos >= b.inner.length then resize b uchar_utf_16_byte_length_max;
-  let n = Bytes.set_utf_16be_uchar b.inner.buffer pos u in
+  let n = (Bytes.set_utf_16be_uchar[@alert "-exn"]) b.inner.buffer pos u in
   if n = 0
   then (resize b uchar_utf_16_byte_length_max; add_utf_16be_uchar b u)
   else (b.position <- pos + n)
@@ -141,20 +140,20 @@ let rec add_utf_16be_uchar b u =
 let rec add_utf_16le_uchar b u =
   let pos = b.position in
   if pos >= b.inner.length then resize b uchar_utf_16_byte_length_max;
-  let n = Bytes.set_utf_16le_uchar b.inner.buffer pos u in
+  let n = (Bytes.set_utf_16le_uchar[@alert "-exn"]) b.inner.buffer pos u in
   if n = 0
   then (resize b uchar_utf_16_byte_length_max; add_utf_16le_uchar b u)
   else (b.position <- pos + n)
 
 let add_substring b s offset len =
   if offset < 0 || len < 0 || offset > String.length s - len
-  then invalid_arg "Buffer.add_substring/add_subbytes";
+  then (invalid_arg[@alert "-exn"]) "Buffer.add_substring/add_subbytes";
   let position = b.position in
   let {buffer;length} = b.inner in
   let new_position = position + len in
   if new_position > length then (
     resize b len;
-    Bytes.blit_string s offset b.inner.buffer b.position len
+    (Bytes.blit_string[@alert "-exn"]) s offset b.inner.buffer b.position len
   ) else
     Bytes.unsafe_blit_string s offset buffer position len;
   b.position <- new_position
@@ -169,7 +168,7 @@ let add_string b s =
   let new_position = b.position + len in
   if new_position > length then (
     resize b len;
-    Bytes.blit_string s 0 b.inner.buffer b.position len;
+    (Bytes.blit_string[@alert "-exn"]) s 0 b.inner.buffer b.position len;
   ) else
     Bytes.unsafe_blit_string s 0 buffer position len;
   b.position <- new_position
@@ -184,7 +183,7 @@ let really_input_up_to ic buf ofs len =
   let rec loop ic buf ~already_read ~ofs ~to_read =
     if to_read = 0 then already_read
     else begin
-      let r = input ic buf ofs to_read in
+      let r = (input[@alert "-exn"]) ic buf ofs to_read in
       if r = 0 then already_read
       else begin
         let already_read = already_read + r in
@@ -204,15 +203,15 @@ let unsafe_add_channel_up_to b ic len =
 
 let add_channel b ic len =
   if len < 0 || len > Sys.max_string_length then   (* PR#5004 *)
-    invalid_arg "Buffer.add_channel";
+    (invalid_arg[@alert "-exn"]) "Buffer.add_channel";
   let n = unsafe_add_channel_up_to b ic len in
   (* It is intentional that a consumer catching End_of_file
      will see the data written (see #6719, #7136). *)
-  if n < len then raise End_of_file;
+  if n < len then (raise[@alert "-exn"]) End_of_file;
   ()
 
 let output_buffer oc b =
-  output oc b.inner.buffer 0 b.position
+  (output[@alert "-exn"]) oc b.inner.buffer 0 b.position
 
 let closing = function
   | '(' -> ')'
@@ -225,7 +224,7 @@ let closing = function
    start: the index where we start the search. *)
 let advance_to_closing opening closing k s start =
   let rec advance k i lim =
-    if i >= lim then raise Not_found else
+    if[@alert "-exn"] i >= lim then raise Not_found else
     if s.[i] = opening then advance (k + 1) (i + 1) lim else
     if s.[i] = closing then
       if k = 0 then i else advance (k - 1) (i + 1) lim
@@ -235,14 +234,14 @@ let advance_to_closing opening closing k s start =
 let advance_to_non_alpha s start =
   let rec advance i lim =
     if i >= lim then lim else
-    match s.[i] with
+    match[@alert "-exn"] s.[i] with
     | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> advance (i + 1) lim
     | _ -> i in
   advance start (String.length s)
 
 (* We are just at the beginning of an ident in s, starting at start. *)
 let find_ident s start lim =
-  if start >= lim then raise Not_found else
+  if[@alert "-exn"] start >= lim then raise Not_found else
   match s.[start] with
   (* Parenthesized ident ? *)
   | '(' | '{' as c ->
@@ -260,7 +259,7 @@ let add_substitute b f s =
   let lim = String.length s in
   let rec subst previous i =
     if i < lim then begin
-      match s.[i] with
+      match[@alert "-exn"] s.[i] with
       | '$' as current when previous = '\\' ->
          add_char b current;
          subst ' ' (i + 1)
@@ -284,7 +283,7 @@ let add_substitute b f s =
 
 let truncate b len =
     if len < 0 || len > length b then
-      invalid_arg "Buffer.truncate"
+      (invalid_arg[@alert "-exn"]) "Buffer.truncate"
     else
       b.position <- len
 
@@ -295,7 +294,7 @@ let to_seq b =
     (* Note that b.position is not a constant and cannot be lifted out of aux *)
     if i >= b.position then Seq.Nil
     else
-      let x = Bytes.get b.inner.buffer i in
+      let x = (Bytes.get[@alert "-exn"]) b.inner.buffer i in
       Seq.Cons (x, aux (i+1))
   in
   aux 0
@@ -305,7 +304,7 @@ let to_seqi b =
     (* Note that b.position is not a constant and cannot be lifted out of aux *)
     if i >= b.position then Seq.Nil
     else
-      let x = Bytes.get b.inner.buffer i in
+      let x = (Bytes.get[@alert "-exn"]) b.inner.buffer i in
       Seq.Cons ((i,x), aux (i+1))
   in
   aux 0

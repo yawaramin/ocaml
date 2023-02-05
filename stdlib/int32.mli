@@ -56,10 +56,9 @@ external mul : int32 -> int32 -> int32 = "%int32_mul"
 (** Multiplication. *)
 
 external div : int32 -> int32 -> int32 = "%int32_div"
+[@@alert exn "Division_by_zero if the second argument is zero"]
 (** Integer division. This division rounds the real quotient of
-   its arguments towards zero, as specified for {!Stdlib.(/)}.
-   @raise Division_by_zero if the second
-   argument is zero.  *)
+   its arguments towards zero, as specified for {!Stdlib.(/)}. *)
 
 val unsigned_div : int32 -> int32 -> int32
 (** Same as {!div}, except that arguments and result are interpreted as {e
@@ -68,10 +67,10 @@ val unsigned_div : int32 -> int32 -> int32
     @since 4.08 *)
 
 external rem : int32 -> int32 -> int32 = "%int32_mod"
+[@@alert exn "Division_by_zero if [y = 0]"]
 (** Integer remainder.  If [y] is not zero, the result
    of [Int32.rem x y] satisfies the following property:
-   [x = Int32.add (Int32.mul (Int32.div x y) y) (Int32.rem x y)].
-   If [y = 0], [Int32.rem x y] raises [Division_by_zero]. *)
+   [x = Int32.add (Int32.mul (Int32.div x y) y) (Int32.rem x y)]. *)
 
 val unsigned_rem : int32 -> int32 -> int32
 (** Same as {!rem}, except that arguments and result are interpreted as {e
@@ -158,6 +157,7 @@ external to_float : int32 -> float
 (** Convert the given 32-bit integer to a floating-point number. *)
 
 external of_string : string -> int32 = "caml_int32_of_string"
+[@@alert exn "Failure if the given string is not a valid representation of an integer, or if the integer represented exceeds the range of integers representable in type [int32]"]
 (** Convert the given string to a 32-bit integer.
    The string is read in decimal (by default, or if the string
    begins with [0u]) or in hexadecimal, octal or binary if the
@@ -169,10 +169,7 @@ external of_string : string -> int32 = "caml_int32_of_string"
    [Int32.min_int + input - Int32.max_int - 1].
 
    The [_] (underscore) character can appear anywhere in the string
-   and is ignored.
-   @raise Failure if the given string is not
-   a valid representation of an integer, or if the integer represented
-   exceeds the range of integers representable in type [int32]. *)
+   and is ignored. *)
 
 val of_string_opt: string -> int32 option
 (** Same as [of_string], but return [None] instead of raising.

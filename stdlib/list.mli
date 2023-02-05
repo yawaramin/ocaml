@@ -69,27 +69,24 @@ val cons : 'a -> 'a list -> 'a list
  *)
 
 val hd : 'a list -> 'a
-(** Return the first element of the given list.
-   @raise Failure if the list is empty.
- *)
+[@@alert exn "Failure if the list is empty"]
+(** Return the first element of the given list. *)
 
 val tl : 'a list -> 'a list
-(** Return the given list without its first element.
-   @raise Failure if the list is empty.
- *)
+[@@alert exn "Failure if the list is empty"]
+(** Return the given list without its first element. *)
 
 val nth : 'a list -> int -> 'a
+[@@alert exn "Failure if the list is too short"]
+[@@alert exn "Invalid_argument if [n] is negative"]
 (** Return the [n]-th element of the given list.
-   The first element (head of the list) is at position 0.
-   @raise Failure if the list is too short.
-   @raise Invalid_argument if [n] is negative.
- *)
+   The first element (head of the list) is at position 0. *)
 
 val nth_opt : 'a list -> int -> 'a option
+[@@alert exn "Invalid_argument if [n] is negative"]
 (** Return the [n]-th element of the given list.
     The first element (head of the list) is at position 0.
     Return [None] if the list is too short.
-    @raise Invalid_argument if [n] is negative.
     @since 4.05
  *)
 
@@ -97,8 +94,8 @@ val rev : 'a list -> 'a list
 (** List reversal. *)
 
 val init : int -> (int -> 'a) -> 'a list
+[@@alert exn "Invalid_argument if [len < 0]"]
 (** [init len f] is [[f 0; f 1; ...; f (len-1)]], evaluated left to right.
-    @raise Invalid_argument if [len < 0].
     @since 4.06
  *)
 
@@ -227,18 +224,14 @@ val fold_right : ('a -> 'acc -> 'acc) -> 'a list -> 'acc -> 'acc
 
 
 val iter2 : ('a -> 'b -> unit) -> 'a list -> 'b list -> unit
+[@@alert exn "Invalid_argument if the two lists are determined to have different lengths"]
 (** [iter2 f [a1; ...; an] [b1; ...; bn]] calls in turn
-   [f a1 b1; ...; f an bn].
-   @raise Invalid_argument if the two lists are determined
-   to have different lengths.
- *)
+   [f a1 b1; ...; f an bn]. *)
 
 val map2 : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list
+[@@alert exn "Invalid_argument if the two lists are determined to have different lengths"]
 (** [map2 f [a1; ...; an] [b1; ...; bn]] is
-   [[f a1 b1; ...; f an bn]].
-   @raise Invalid_argument if the two lists are determined
-   to have different lengths.
- *)
+   [[f a1 b1; ...; f an bn]]. *)
 
 val rev_map2 : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list
 (** [rev_map2 f l1 l2] gives the same result as
@@ -247,18 +240,17 @@ val rev_map2 : ('a -> 'b -> 'c) -> 'a list -> 'b list -> 'c list
 
 val fold_left2 :
   ('acc -> 'a -> 'b -> 'acc) -> 'acc -> 'a list -> 'b list -> 'acc
+[@@alert exn "Invalid_argument if the two lists are determined to have different lengths"]
 (** [fold_left2 f init [a1; ...; an] [b1; ...; bn]] is
-   [f (... (f (f init a1 b1) a2 b2) ...) an bn].
-   @raise Invalid_argument if the two lists are determined
-   to have different lengths.
- *)
+   [f (... (f (f init a1 b1) a2 b2) ...) an bn]. *)
 
 val fold_right2 :
   ('a -> 'b -> 'acc -> 'acc) -> 'a list -> 'b list -> 'acc -> 'acc
+[@@alert exn "Invalid_argument if the two lists are determined to have different lengths"]
 (** [fold_right2 f [a1; ...; an] [b1; ...; bn] init] is
    [f a1 b1 (f a2 b2 (... (f an bn init) ...))].
-   @raise Invalid_argument if the two lists are determined
-   to have different lengths. Not tail-recursive.
+
+   Not tail-recursive.
  *)
 
 
@@ -280,21 +272,17 @@ val exists : ('a -> bool) -> 'a list -> bool
  *)
 
 val for_all2 : ('a -> 'b -> bool) -> 'a list -> 'b list -> bool
-(** Same as {!for_all}, but for a two-argument predicate.
-   @raise Invalid_argument if the two lists are determined
-   to have different lengths.
- *)
+[@@alert exn "Invalid_argument if the two lists are determined to have different lengths"]
+(** Same as {!for_all}, but for a two-argument predicate. *)
 
 val exists2 : ('a -> 'b -> bool) -> 'a list -> 'b list -> bool
-(** Same as {!exists}, but for a two-argument predicate.
-   @raise Invalid_argument if the two lists are determined
-   to have different lengths.
- *)
+[@@alert exn "Invalid_argument if the two lists are determined to have different lengths"]
+(** Same as {!exists}, but for a two-argument predicate. *)
 
 val mem : 'a -> 'a list -> bool
+[@@alert exn "Invalid_argument on list of function values"]
 (** [mem a set] is true if and only if [a] is equal
-   to an element of [set].
- *)
+   to an element of [set]. *)
 
 val memq : 'a -> 'a list -> bool
 (** Same as {!mem}, but uses physical equality instead of structural
@@ -306,10 +294,9 @@ val memq : 'a -> 'a list -> bool
 
 
 val find : ('a -> bool) -> 'a list -> 'a
+[@@alert exn "Not_found if there is no value that satisfies [f] in the list [l]."]
 (** [find f l] returns the first element of the list [l]
    that satisfies the predicate [f].
-   @raise Not_found if there is no value that satisfies [f] in the
-   list [l].
  *)
 
 val find_opt : ('a -> bool) -> 'a list -> 'a option
@@ -387,15 +374,16 @@ val partition_map : ('a -> ('b, 'c) Either.t) -> 'a list -> 'b list * 'c list
 
 
 val assoc : 'a -> ('a * 'b) list -> 'b
+[@@alert exn "Not_found if there is no value associated with [a] in the list [l]"]
+[@@alert exn "Invalid_argument on associative list with function keys"]
 (** [assoc a l] returns the value associated with key [a] in the list of
    pairs [l]. That is,
    [assoc a [ ...; (a,b); ...] = b]
    if [(a,b)] is the leftmost binding of [a] in list [l].
-   @raise Not_found if there is no value associated with [a] in the
-   list [l].
  *)
 
 val assoc_opt : 'a -> ('a * 'b) list -> 'b option
+[@@alert exn "Invalid_argument on associative list with function keys"]
 (** [assoc_opt a l] returns the value associated with key [a] in the list of
     pairs [l]. That is,
     [assoc_opt a [ ...; (a,b); ...] = Some b]
@@ -406,6 +394,7 @@ val assoc_opt : 'a -> ('a * 'b) list -> 'b option
  *)
 
 val assq : 'a -> ('a * 'b) list -> 'b
+[@@alert exn "Not_found if there is no value associated with [a] by physical equality in the list [l]"]
 (** Same as {!assoc}, but uses physical equality instead of
    structural equality to compare keys.
  *)
@@ -417,6 +406,7 @@ val assq_opt : 'a -> ('a * 'b) list -> 'b option
  *)
 
 val mem_assoc : 'a -> ('a * 'b) list -> bool
+[@@alert exn "Invalid_argument on associative list with function keys"]
 (** Same as {!assoc}, but simply return [true] if a binding exists,
    and [false] if no bindings exist for the given key.
  *)
@@ -427,6 +417,7 @@ val mem_assq : 'a -> ('a * 'b) list -> bool
  *)
 
 val remove_assoc : 'a -> ('a * 'b) list -> ('a * 'b) list
+[@@alert exn "Invalid_argument on associative list with function keys"]
 (** [remove_assoc a l] returns the list of
    pairs [l] without the first pair with key [a], if any.
    Not tail-recursive.
@@ -448,11 +439,11 @@ val split : ('a * 'b) list -> 'a list * 'b list
  *)
 
 val combine : 'a list -> 'b list -> ('a * 'b) list
+[@@alert exn "Invalid_argument if the two lists have different lengths"]
 (** Transform a pair of lists into a list of pairs:
    [combine [a1; ...; an] [b1; ...; bn]] is
    [[(a1,b1); ...; (an,bn)]].
-   @raise Invalid_argument if the two lists
-   have different lengths. Not tail-recursive.
+   Not tail-recursive.
  *)
 
 

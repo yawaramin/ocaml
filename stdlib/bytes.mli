@@ -58,30 +58,29 @@ external length : bytes -> int = "%bytes_length"
 (** Return the length (number of bytes) of the argument. *)
 
 external get : bytes -> int -> char = "%bytes_safe_get"
-(** [get s n] returns the byte at index [n] in argument [s].
-    @raise Invalid_argument if [n] is not a valid index in [s]. *)
-
+[@@alert exn "Invalid_argument if [n] is not a valid index in [s]"]
+(** [get s n] returns the byte at index [n] in argument [s]. *)
 
 external set : bytes -> int -> char -> unit = "%bytes_safe_set"
+[@@alert exn "Invalid_argument if [n] is not a valid index in [s]"]
 (** [set s n c] modifies [s] in place, replacing the byte at index [n]
-    with [c].
-    @raise Invalid_argument if [n] is not a valid index in [s]. *)
+    with [c]. *)
 
 external create : int -> bytes = "caml_create_bytes"
+[@@alert exn "Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}"]
 (** [create n] returns a new byte sequence of length [n]. The
-    sequence is uninitialized and contains arbitrary bytes.
-    @raise Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}. *)
+    sequence is uninitialized and contains arbitrary bytes. *)
 
 val make : int -> char -> bytes
+[@@alert exn "Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}"]
 (** [make n c] returns a new byte sequence of length [n], filled with
-    the byte [c].
-    @raise Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}. *)
+    the byte [c]. *)
 
 val init : int -> (int -> char) -> bytes
+[@@alert exn "Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}"]
 (** [init n f] returns a fresh byte sequence of length [n],
     with character [i] initialized to the result of [f i] (in increasing
-    index order).
-    @raise Invalid_argument if [n < 0] or [n > ]{!Sys.max_string_length}. *)
+    index order). *)
 
 val empty : bytes
 (** A byte sequence of size 0. *)
@@ -99,68 +98,58 @@ val to_string : bytes -> string
     sequence. *)
 
 val sub : bytes -> int -> int -> bytes
+[@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid range of [s]"]
 (** [sub s pos len] returns a new byte sequence of length [len],
     containing the subsequence of [s] that starts at position [pos]
-    and has length [len].
-    @raise Invalid_argument if [pos] and [len] do not designate a
-    valid range of [s]. *)
+    and has length [len]. *)
 
 val sub_string : bytes -> int -> int -> string
 (** Same as {!sub} but return a string instead of a byte sequence. *)
 
 val extend : bytes -> int -> int -> bytes
+[@@alert exn "Invalid_argument if the result length is negative or longer than {!Sys.max_string_length} bytes"]
 (** [extend s left right] returns a new byte sequence that contains
     the bytes of [s], with [left] uninitialized bytes prepended and
     [right] uninitialized bytes appended to it. If [left] or [right]
     is negative, then bytes are removed (instead of appended) from
     the corresponding side of [s].
-    @raise Invalid_argument if the result length is negative or
-    longer than {!Sys.max_string_length} bytes.
-    @since 4.05 in BytesLabels *)
+    @since 4.05.0 in BytesLabels *)
 
 val fill : bytes -> int -> int -> char -> unit
+[@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid range of [s]"]
 (** [fill s pos len c] modifies [s] in place, replacing [len]
-    characters with [c], starting at [pos].
-    @raise Invalid_argument if [pos] and [len] do not designate a
-    valid range of [s]. *)
+    characters with [c], starting at [pos]. *)
 
 val blit :
   bytes -> int -> bytes -> int -> int
   -> unit
+[@@alert exn "Invalid_argument if [src_pos] and [len] do not designate a valid range of [src], or if [dst_pos] and [len] do not designate a valid range of [dst]"]
 (** [blit src src_pos dst dst_pos len] copies [len] bytes from sequence
     [src], starting at index [src_pos], to sequence [dst], starting at
     index [dst_pos]. It works correctly even if [src] and [dst] are the
     same byte sequence, and the source and destination intervals
-    overlap.
-    @raise Invalid_argument if [src_pos] and [len] do not
-    designate a valid range of [src], or if [dst_pos] and [len]
-    do not designate a valid range of [dst]. *)
+    overlap. *)
 
 val blit_string :
   string -> int -> bytes -> int -> int
   -> unit
-(** [blit src src_pos dst dst_pos len] copies [len] bytes from string
+[@@alert exn "Invalid_argument if [src_pos] and [len] do not designate a valid range of [src], or if [dst_pos] and [len] do not designate a valid range of [dst]"]
+(** [blit_string src src_pos dst dst_pos len] copies [len] bytes from string
     [src], starting at index [src_pos], to byte sequence [dst],
     starting at index [dst_pos].
-    @raise Invalid_argument if [src_pos] and [len] do not
-    designate a valid range of [src], or if [dst_pos] and [len]
-    do not designate a valid range of [dst].
-    @since 4.05 in BytesLabels *)
+    @since 4.05.0 in BytesLabels *)
 
 val concat : bytes -> bytes list -> bytes
+[@@alert exn "Invalid_argument if the result is longer than {!Sys.max_string_length} bytes"]
 (** [concat sep sl] concatenates the list of byte sequences [sl],
     inserting the separator byte sequence [sep] between each, and
-    returns the result as a new byte sequence.
-    @raise Invalid_argument if the result is longer than
-    {!Sys.max_string_length} bytes.
-    *)
+    returns the result as a new byte sequence.  *)
 
 val cat : bytes -> bytes -> bytes
+[@@alert exn "Invalid_argument if the result is longer than {!Sys.max_string_length} bytes"]
 (** [cat s1 s2] concatenates [s1] and [s2] and returns the result
     as a new byte sequence.
-    @raise Invalid_argument if the result is longer than
-    {!Sys.max_string_length} bytes.
-    @since 4.05 in BytesLabels *)
+    @since 4.05.0 in BytesLabels *)
 
 val iter : (char -> unit) -> bytes -> unit
 (** [iter f s] applies function [f] in turn to all the bytes of [s].
@@ -209,17 +198,16 @@ val trim : bytes -> bytes
     characters [' '], ['\012'], ['\n'], ['\r'], and ['\t']. *)
 
 val escaped : bytes -> bytes
+[@@alert exn "Invalid_argument if the result is longer than {!Sys.max_string_length} bytes"]
 (** Return a copy of the argument, with special characters represented
     by escape sequences, following the lexical conventions of OCaml.
     All characters outside the ASCII printable range (32..126) are
-    escaped, as well as backslash and double-quote.
-    @raise Invalid_argument if the result is longer than
-    {!Sys.max_string_length} bytes. *)
+    escaped, as well as backslash and double-quote. *)
 
 val index : bytes -> char -> int
+[@@alert exn "Not_found if [c] does not occur in [s]"]
 (** [index s c] returns the index of the first occurrence of byte [c]
-    in [s].
-    @raise Not_found if [c] does not occur in [s]. *)
+    in [s]. *)
 
 val index_opt: bytes -> char -> int option
 (** [index_opt s c] returns the index of the first occurrence of byte [c]
@@ -227,9 +215,9 @@ val index_opt: bytes -> char -> int option
     @since 4.05 *)
 
 val rindex : bytes -> char -> int
+[@@alert exn "Not_found if [c] does not occur in [s]"]
 (** [rindex s c] returns the index of the last occurrence of byte [c]
-    in [s].
-    @raise Not_found if [c] does not occur in [s]. *)
+    in [s]. *)
 
 val rindex_opt: bytes -> char -> int option
 (** [rindex_opt s c] returns the index of the last occurrence of byte [c]
@@ -237,49 +225,48 @@ val rindex_opt: bytes -> char -> int option
     @since 4.05 *)
 
 val index_from : bytes -> int -> char -> int
+[@@alert exn "Invalid_argument if [i] is not a valid position in [s]"]
+[@@alert exn "Not_found if [c] does not occur in [s] after position [i]"]
 (** [index_from s i c] returns the index of the first occurrence of
     byte [c] in [s] after position [i].  [index s c] is
-    equivalent to [index_from s 0 c].
-    @raise Invalid_argument if [i] is not a valid position in [s].
-    @raise Not_found if [c] does not occur in [s] after position [i]. *)
+    equivalent to [index_from s 0 c]. *)
 
 val index_from_opt: bytes -> int -> char -> int option
+[@@alert exn "Invalid_argument if [i] is not a valid position in [s]"]
 (** [index_from_opt s i c] returns the index of the first occurrence of
     byte [c] in [s] after position [i] or [None] if [c] does not occur in [s]
     after position [i].
     [index_opt s c] is equivalent to [index_from_opt s 0 c].
-    @raise Invalid_argument if [i] is not a valid position in [s].
     @since 4.05 *)
 
 val rindex_from : bytes -> int -> char -> int
+[@@alert exn "Invalid_argument if [i+1] is not a valid position in [s]"]
+[@@alert exn "Not_found if [c] does not occur in [s] before position [i+1]"]
 (** [rindex_from s i c] returns the index of the last occurrence of
     byte [c] in [s] before position [i+1].  [rindex s c] is equivalent
-    to [rindex_from s (length s - 1) c].
-    @raise Invalid_argument if [i+1] is not a valid position in [s].
-    @raise Not_found if [c] does not occur in [s] before position [i+1]. *)
+    to [rindex_from s (length s - 1) c]. *)
 
 val rindex_from_opt: bytes -> int -> char -> int option
+[@@alert exn "Invalid_argument if [i+1] is not a valid position in [s]"]
 (** [rindex_from_opt s i c] returns the index of the last occurrence
     of byte [c] in [s] before position [i+1] or [None] if [c] does not
     occur in [s] before position [i+1].  [rindex_opt s c] is equivalent to
     [rindex_from s (length s - 1) c].
-    @raise Invalid_argument if [i+1] is not a valid position in [s].
     @since 4.05 *)
 
 val contains : bytes -> char -> bool
 (** [contains s c] tests if byte [c] appears in [s]. *)
 
 val contains_from : bytes -> int -> char -> bool
+[@@alert exn "Invalid_argument if [start] is not a valid position in [s]"]
 (** [contains_from s start c] tests if byte [c] appears in [s] after
     position [start].  [contains s c] is equivalent to [contains_from
-    s 0 c].
-    @raise Invalid_argument if [start] is not a valid position in [s]. *)
+    s 0 c]. *)
 
 val rcontains_from : bytes -> int -> char -> bool
+[@@alert exn "Invalid_argument if [stop < 0] or [stop+1] is not a valid position in [s]"]
 (** [rcontains_from s stop c] tests if byte [c] appears in [s] before
-    position [stop+1].
-    @raise Invalid_argument if [stop < 0] or [stop+1] is not a valid
-    position in [s]. *)
+    position [stop+1]. *)
 
 val uppercase_ascii : bytes -> bytes
 (** Return a copy of the argument, with all lowercase letters
@@ -484,7 +471,8 @@ val to_seqi : t -> (int * char) Seq.t
     @since 4.07 *)
 
 val of_seq : char Seq.t -> t
-(** Create a string from the generator
+[@@alert exn "Failure if the bytes would exceed [Sys.max_string_length]"]
+(** Create bytes from the generator
     @since 4.07 *)
 
 (** {1:utf UTF codecs and validations}
@@ -511,10 +499,12 @@ val is_valid_utf_8 : t -> bool
 (** {2:utf_16be UTF-16BE} *)
 
 val get_utf_16be_uchar : t -> int -> Uchar.utf_decode
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_utf_16be_uchar b i] decodes an UTF-16BE character at index
     [i] in [b]. *)
 
 val set_utf_16be_uchar : t -> int -> Uchar.t -> int
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [set_utf_16be_uchar b i u] UTF-16BE encodes [u] at index [i] in [b]
     and returns the number of bytes [n] that were written starting
     at [i]. If [n] is [0] there was not enough space to encode [u]
@@ -528,10 +518,12 @@ val is_valid_utf_16be : t -> bool
 (** {2:utf_16le UTF-16LE} *)
 
 val get_utf_16le_uchar : t -> int -> Uchar.utf_decode
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [get_utf_16le_uchar b i] decodes an UTF-16LE character at index
     [i] in [b]. *)
 
 val set_utf_16le_uchar : t -> int -> Uchar.t -> int
+[@@alert exn "Invalid_argument if index out of bounds"]
 (** [set_utf_16le_uchar b i u] UTF-16LE encodes [u] at index [i] in [b]
     and returns the number of bytes [n] that were written starting
     at [i]. If [n] is [0] there was not enough space to encode [u]
@@ -546,10 +538,6 @@ val is_valid_utf_16le : t -> bool
 
 (** The functions in this section binary encode and decode integers to
     and from byte sequences.
-
-    All following functions raise [Invalid_argument] if the space
-    needed at index [i] to decode or encode the integer is not
-    available.
 
     Little-endian (resp. big-endian) encoding means that least
     (resp. most) significant bytes are stored first.  Big-endian is
@@ -573,166 +561,194 @@ val is_valid_utf_16le : t -> bool
 *)
 
 val get_uint8 : bytes -> int -> int
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_uint8 b i] is [b]'s unsigned 8-bit integer starting at byte index [i].
     @since 4.08
 *)
 
 val get_int8 : bytes -> int -> int
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int8 b i] is [b]'s signed 8-bit integer starting at byte index [i].
     @since 4.08
 *)
 
 val get_uint16_ne : bytes -> int -> int
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_uint16_ne b i] is [b]'s native-endian unsigned 16-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_uint16_be : bytes -> int -> int
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_uint16_be b i] is [b]'s big-endian unsigned 16-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_uint16_le : bytes -> int -> int
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_uint16_le b i] is [b]'s little-endian unsigned 16-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int16_ne : bytes -> int -> int
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int16_ne b i] is [b]'s native-endian signed 16-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int16_be : bytes -> int -> int
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int16_be b i] is [b]'s big-endian signed 16-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int16_le : bytes -> int -> int
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int16_le b i] is [b]'s little-endian signed 16-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int32_ne : bytes -> int -> int32
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int32_ne b i] is [b]'s native-endian 32-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int32_be : bytes -> int -> int32
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int32_be b i] is [b]'s big-endian 32-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int32_le : bytes -> int -> int32
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int32_le b i] is [b]'s little-endian 32-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int64_ne : bytes -> int -> int64
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int64_ne b i] is [b]'s native-endian 64-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int64_be : bytes -> int -> int64
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int64_be b i] is [b]'s big-endian 64-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val get_int64_le : bytes -> int -> int64
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [get_int64_le b i] is [b]'s little-endian 64-bit integer
     starting at byte index [i].
     @since 4.08
 *)
 
 val set_uint8 : bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_uint8 b i v] sets [b]'s unsigned 8-bit integer starting at byte index
     [i] to [v].
     @since 4.08
 *)
 
 val set_int8 : bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int8 b i v] sets [b]'s signed 8-bit integer starting at byte index
     [i] to [v].
     @since 4.08
 *)
 
 val set_uint16_ne : bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_uint16_ne b i v] sets [b]'s native-endian unsigned 16-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_uint16_be : bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_uint16_be b i v] sets [b]'s big-endian unsigned 16-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_uint16_le : bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_uint16_le b i v] sets [b]'s little-endian unsigned 16-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int16_ne : bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int16_ne b i v] sets [b]'s native-endian signed 16-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int16_be : bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int16_be b i v] sets [b]'s big-endian signed 16-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int16_le : bytes -> int -> int -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int16_le b i v] sets [b]'s little-endian signed 16-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int32_ne : bytes -> int -> int32 -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int32_ne b i v] sets [b]'s native-endian 32-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int32_be : bytes -> int -> int32 -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int32_be b i v] sets [b]'s big-endian 32-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int32_le : bytes -> int -> int32 -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int32_le b i v] sets [b]'s little-endian 32-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int64_ne : bytes -> int -> int64 -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int64_ne b i v] sets [b]'s native-endian 64-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int64_be : bytes -> int -> int64 -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int64_be b i v] sets [b]'s big-endian 64-bit integer
     starting at byte index [i] to [v].
     @since 4.08
 *)
 
 val set_int64_le : bytes -> int -> int64 -> unit
+[@@alert exn "Invalid_argument if the space needed at index [i] to decode or encode the integer is not available"]
 (** [set_int64_le b i v] sets [b]'s little-endian 64-bit integer
     starting at byte index [i] to [v].
     @since 4.08

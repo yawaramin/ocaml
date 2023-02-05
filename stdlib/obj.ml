@@ -106,10 +106,10 @@ struct
     in
     let name =
       if (is_block slot) && (tag slot) = object_tag then field slot 0
-      else invalid_arg "Obj.extension_constructor"
+      else (invalid_arg[@alert "-exn"]) "Obj.extension_constructor"
     in
       if (tag name) = string_tag then (obj slot : t)
-      else invalid_arg "Obj.extension_constructor"
+      else (invalid_arg[@alert "-exn"]) "Obj.extension_constructor"
 
   let [@inline always] name (slot : t) =
     (obj (field (repr slot) 0) : string)
@@ -130,14 +130,14 @@ module Ephemeron = struct
   external create : int -> t = "caml_ephe_create"
   let create l =
     if not (0 <= l && l <= max_ephe_length) then
-      invalid_arg "Obj.Ephemeron.create";
+      (invalid_arg[@alert "-exn"]) "Obj.Ephemeron.create";
     create l
 
   let length x = size(repr x) - additional_values
 
   let raise_if_invalid_offset e o msg =
     if not (0 <= o && o < length e) then
-      invalid_arg msg
+      (invalid_arg[@alert "-exn"]) msg
 
   external get_key: t -> int -> obj_t option = "caml_ephe_get_key"
   let get_key e o =
@@ -170,7 +170,7 @@ module Ephemeron = struct
   let blit_key e1 o1 e2 o2 l =
     if l < 0 || o1 < 0 || o1 > length e1 - l
        || o2 < 0 || o2 > length e2 - l
-    then invalid_arg "Obj.Ephemeron.blit_key"
+    then (invalid_arg[@alert "-exn"]) "Obj.Ephemeron.blit_key"
     else if l <> 0 then blit_key e1 o1 e2 o2 l
 
   external get_data: t -> obj_t option = "caml_ephe_get_data"

@@ -17,8 +17,8 @@ external format_int : string -> int -> string = "caml_format_int"
 
 let err_no_pred = "U+0000 has no predecessor"
 let err_no_succ = "U+10FFFF has no successor"
-let err_not_sv i = format_int "%X" i ^ " is not an Unicode scalar value"
-let err_not_latin1 u = "U+" ^ format_int "%04X" u ^ " is not a latin1 character"
+let err_not_sv i = begin[@alert "-exn"] format_int "%X" i ^ " is not an Unicode scalar value" end
+let err_not_latin1 u = begin[@alert "-exn"] "U+" ^ format_int "%04X" u ^ " is not a latin1 character" end
 
 type t = int
 
@@ -32,23 +32,23 @@ let rep = 0xFFFD
 
 let succ u =
   if u = lo_bound then hi_bound else
-  if u = max then invalid_arg err_no_succ else
+  if u = max then (invalid_arg[@alert "-exn"]) err_no_succ else
   u + 1
 
 let pred u =
   if u = hi_bound then lo_bound else
-  if u = min then invalid_arg err_no_pred else
+  if u = min then (invalid_arg[@alert "-exn"]) err_no_pred else
   u - 1
 
 let is_valid i = (min <= i && i <= lo_bound) || (hi_bound <= i && i <= max)
-let of_int i = if is_valid i then i else invalid_arg (err_not_sv i)
+let of_int i = if is_valid i then i else (invalid_arg[@alert "-exn"]) (err_not_sv i)
 external unsafe_of_int : int -> t = "%identity"
 external to_int : t -> int = "%identity"
 
 let is_char u = u < 256
 let of_char c = Char.code c
 let to_char u =
-  if u > 255 then invalid_arg (err_not_latin1 u) else
+  if u > 255 then (invalid_arg[@alert "-exn"]) (err_not_latin1 u) else
   Char.unsafe_chr u
 
 let unsafe_to_char = Char.unsafe_chr
@@ -77,15 +77,15 @@ let[@inline] utf_decode n u = ((8 lor n) lsl decode_bits) lor (to_int u)
 let[@inline] utf_decode_invalid n = (n lsl decode_bits) lor rep
 
 let utf_8_byte_length u = match to_int u with
-| u when u < 0 -> assert false
-| u when u <= 0x007F -> 1
-| u when u <= 0x07FF -> 2
-| u when u <= 0xFFFF -> 3
-| u when u <= 0x10FFFF -> 4
-| _ -> assert false
+  | u when u < 0 -> assert false
+  | u when u <= 0x007F -> 1
+  | u when u <= 0x07FF -> 2
+  | u when u <= 0xFFFF -> 3
+  | u when u <= 0x10FFFF -> 4
+  | _ -> assert false
 
 let utf_16_byte_length u = match to_int u with
-| u when u < 0 -> assert false
-| u when u <= 0xFFFF -> 2
-| u when u <= 0x10FFFF -> 4
-| _ -> assert false
+  | u when u < 0 -> assert false
+  | u when u <= 0xFFFF -> 2
+  | u when u <= 0x10FFFF -> 4
+  | _ -> assert false

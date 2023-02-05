@@ -56,7 +56,7 @@ module DLS = struct
     "caml_domain_dls_set" [@@noalloc]
 
   let create_dls () =
-    let st = Array.make 8 unique_value in
+    let st = (Array.make[@alert "-exn"]) 8 unique_value in
     set_dls_state st
 
   let _ = create_dls ()
@@ -95,8 +95,8 @@ module DLS = struct
         if idx < s then s else compute_new_size (2 * s)
       in
       let new_sz = compute_new_size sz in
-      let new_st = Array.make new_sz unique_value in
-      Array.blit st 0 new_st 0 sz;
+      let new_st = (Array.make[@alert "-exn"]) new_sz unique_value in
+      (Array.blit[@alert "-exn"]) st 0 new_st 0 sz;
       set_dls_state new_st;
       new_st
     end
@@ -106,14 +106,18 @@ module DLS = struct
     (* [Sys.opaque_identity] ensures that flambda does not look at the type of
      * [x], which may be a [float] and conclude that the [st] is a float array.
      * We do not want OCaml's float array optimisation kicking in here. *)
+    begin[@alert "-exn"]
     st.(idx) <- Obj.repr (Sys.opaque_identity x)
+    end
 
   let get (idx, init) =
     let st = maybe_grow idx in
-    let v = st.(idx) in
+    let v = st.(idx)[@alert "-exn"] in
     if v == unique_value then
       let v' = Obj.repr (init ()) in
-      st.(idx) <- (Sys.opaque_identity v');
+      begin[@alert "-exn"]
+      st.(idx) <- (Sys.opaque_identity v')
+      end;
       Obj.magic v'
     else Obj.magic v
 
@@ -125,7 +129,7 @@ module DLS = struct
 
   let set_initial_keys (l: (int * Obj.t) list) =
     List.iter
-      (fun (idx, v) ->
+      (fun[@alert "-exn"] (idx, v) ->
         let st = maybe_grow idx in st.(idx) <- v)
       l
 
@@ -148,7 +152,7 @@ let first_spawn_function = ref (fun () -> ())
 
 let before_first_spawn f =
   if Atomic.get first_domain_spawned then
-    raise (Invalid_argument "first domain already spawned")
+    (invalid_arg[@alert "-exn"]) "first domain already spawned"
   else begin
     let old_f = !first_spawn_function in
     let new_f () = old_f (); f () in
@@ -233,7 +237,7 @@ let spawn f =
         term_state := Finished result';
         Condition.broadcast term_condition;
     | Finished _ ->
-        failwith "internal error: Am I already finished?"
+        (failwith[@alert "-exn"]) "internal error: Am I already finished?"
     (* [term_mutex] is unlocked in the runtime after the cleanup functions on
        the C side are finished. *)
   in
@@ -255,6 +259,6 @@ let join { term_mutex; term_condition; term_state; _ } =
   in
   match loop () with
   | Ok x -> x
-  | Error ex -> raise ex
+  | Error ex -> (raise[@alert "-exn"]) ex
 
 let recommended_domain_count = Raw.get_recommended_domain_count

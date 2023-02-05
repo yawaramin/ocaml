@@ -31,7 +31,7 @@ external to_buffer_unsafe:
 
 let to_buffer buff ofs len v flags =
   if ofs < 0 || len < 0 || ofs > Bytes.length buff - len
-  then invalid_arg "Marshal.to_buffer: substring out of bounds"
+  then (invalid_arg[@alert "-exn"]) "Marshal.to_buffer: substring out of bounds"
   else to_buffer_unsafe buff ofs len v flags
 
 (* The functions below use byte sequences as input, never using any
@@ -47,17 +47,17 @@ external data_size_unsafe: bytes -> int -> int = "caml_marshal_data_size"
 let header_size = 20
 let data_size buff ofs =
   if ofs < 0 || ofs > Bytes.length buff - header_size
-  then invalid_arg "Marshal.data_size"
+  then (invalid_arg[@alert "-exn"]) "Marshal.data_size"
   else data_size_unsafe buff ofs
 let total_size buff ofs = header_size + data_size buff ofs
 
 let from_bytes buff ofs =
   if ofs < 0 || ofs > Bytes.length buff - header_size
-  then invalid_arg "Marshal.from_bytes"
+  then (invalid_arg[@alert "-exn"]) "Marshal.from_bytes"
   else begin
     let len = data_size_unsafe buff ofs in
     if ofs > Bytes.length buff - (header_size + len)
-    then invalid_arg "Marshal.from_bytes"
+    then (invalid_arg[@alert "-exn"]) "Marshal.from_bytes"
     else from_bytes_unsafe buff ofs
   end
 

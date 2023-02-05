@@ -269,7 +269,7 @@ let rec init_aux f i j () =
 
 let init n f =
   if n < 0 then
-    invalid_arg "Seq.init"
+    (invalid_arg[@alert "-exn"]) "Seq.init"
   else
     init_aux f 0 n
 
@@ -362,7 +362,7 @@ let rec take_aux n xs =
           Cons (x, take_aux (n-1) xs)
 
 let take n xs =
-  if n < 0 then invalid_arg "Seq.take";
+  if n < 0 then (invalid_arg[@alert "-exn"]) "Seq.take";
   take_aux n xs
 
 (* [force_drop n xs] is equivalent to [drop n xs ()].
@@ -384,12 +384,9 @@ let rec force_drop n xs =
    without allocating any memory. *)
 
 let drop n xs =
-  if n < 0 then invalid_arg "Seq.drop"
-  else if n = 0 then
-    xs
-  else
-    fun () ->
-      force_drop n xs
+  if n < 0 then (invalid_arg[@alert "-exn"]) "Seq.drop"
+  else if n = 0 then xs
+  else fun () -> force_drop n xs
 
 let rec take_while p xs () =
   match xs() with
@@ -426,7 +423,7 @@ module Suspension = struct
     (* fun s -> lazy (s()) *)
 
   let from_lazy (s : 'a Lazy.t) : 'a suspension =
-    fun () -> Lazy.force s
+    fun () -> (Lazy.force[@alert "-exn"]) s
 
   (* [memoize] turns an arbitrary suspension into a persistent suspension. *)
 
@@ -438,7 +435,7 @@ module Suspension = struct
   let failure : _ suspension =
     fun () ->
       (* A suspension created by [once] has been forced twice. *)
-      raise Forced_twice
+      (raise[@alert "-exn"]) Forced_twice
 
   (* If [f] is a suspension, then [once f] is a suspension that can be forced
      at most once. If it is forced more than once, then [Forced_twice] is

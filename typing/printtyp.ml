@@ -2357,7 +2357,7 @@ let head_error_printer mode txt_got txt_but = function
   | None -> ignore
   | Some d ->
       let d = Errortrace.map_diff (trees_of_type_expansion mode) d in
-      dprintf "%t@;<1 2>%a@ %t@;<1 2>%a"
+      dprintf "@[%t:@]\n       @[%a@]\n@[%t:@]@[%a@]"
         txt_got type_expansion d.Errortrace.got
         txt_but type_expansion d.Errortrace.expected
 

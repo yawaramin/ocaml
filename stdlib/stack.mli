@@ -44,8 +44,8 @@ val push : 'a -> 'a t -> unit
 (** [push x s] adds the element [x] at the top of stack [s]. *)
 
 val pop : 'a t -> 'a
-(** [pop s] removes and returns the topmost element in stack [s],
-   or raises {!Empty} if the stack is empty. *)
+[@@alert exn "Empty if the stack is empty"]
+(** [pop s] removes and returns the topmost element in stack [s]. *)
 
 val pop_opt : 'a t -> 'a option
 (** [pop_opt s] removes and returns the topmost element in stack [s],
@@ -53,13 +53,13 @@ val pop_opt : 'a t -> 'a option
    @since 4.08 *)
 
 val drop : 'a t -> unit
-(** [drop s] removes the topmost element in stack [s],
-   or raises {!Empty} if the stack is empty.
+[@@alert exn "Empty if the stack is empty"]
+(** [drop s] removes the topmost element in stack [s].
    @since 5.1 *)
 
 val top : 'a t -> 'a
-(** [top s] returns the topmost element in stack [s],
-   or raises {!Empty} if the stack is empty. *)
+[@@alert exn "Empty if the stack is empty"]
+(** [top s] returns the topmost element in stack [s]. *)
 
 val top_opt : 'a t -> 'a option
 (** [top_opt s] returns the topmost element in stack [s],

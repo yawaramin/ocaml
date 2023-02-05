@@ -47,20 +47,18 @@ type t
 (** The type of counting semaphores. *)
 
 val make : int -> t
+[@@alert exn "Invalid_argument if [n < 0]"]
 (** [make n] returns a new counting semaphore, with initial value [n].
     The initial value [n] must be nonnegative.
-
-    @raise Invalid_argument if [n < 0]
 *)
 
 val release : t -> unit
+[@@alert exn "Sys_error if the value of the semaphore would overflow [max_int]"]
 (** [release s] increments the value of semaphore [s].
     If other threads are waiting on [s], one of them is restarted.
     If the current value of [s] is equal to [max_int], the value of
     the semaphore is unchanged and a [Sys_error] exception is raised
     to signal overflow.
-
-    @raise Sys_error if the value of the semaphore would overflow [max_int]
 *)
 
 val acquire : t -> unit

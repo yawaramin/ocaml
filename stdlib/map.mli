@@ -153,9 +153,9 @@ module type S =
         @since 3.12 *)
 
     val min_binding: 'a t -> (key * 'a)
+    [@@alert exn "Not_found if the map is empty"]
     (** Return the binding with the smallest key in a given map
-        (with respect to the [Ord.compare] ordering), or raise
-        [Not_found] if the map is empty.
+        (with respect to the [Ord.compare] ordering).
         @since 3.12 *)
 
     val min_binding_opt: 'a t -> (key * 'a) option
@@ -175,8 +175,8 @@ module type S =
         @since 4.05 *)
 
     val choose: 'a t -> (key * 'a)
-    (** Return one binding of the given map, or raise [Not_found] if
-        the map is empty. Which binding is chosen is unspecified,
+    [@@alert exn "Not_found if the map is empty"]
+    (** Return one binding of the given map.  Which binding is chosen is unspecified,
         but equal bindings will be chosen for equal maps.
         @since 3.12 *)
 
@@ -189,8 +189,8 @@ module type S =
     (** {1:searching Searching} *)
 
     val find: key -> 'a t -> 'a
-    (** [find x m] returns the current value of [x] in [m],
-        or raises [Not_found] if no binding for [x] exists. *)
+    [@@alert exn "Not_found if no binding for [x] exists"]
+    (** [find x m] returns the current value of [x] in [m]. *)
 
     val find_opt: key -> 'a t -> 'a option
     (** [find_opt x m] returns [Some v] if the current value of [x]
@@ -198,9 +198,9 @@ module type S =
         @since 4.05 *)
 
     val find_first: (key -> bool) -> 'a t -> key * 'a
+    [@@alert exn "Not_found if no such key exists"]
     (** [find_first f m], where [f] is a monotonically increasing function,
-        returns the binding of [m] with the lowest key [k] such that [f k],
-        or raises [Not_found] if no such key exists.
+        returns the binding of [m] with the lowest key [k] such that [f k].
 
         For example, [find_first (fun k -> Ord.compare k x >= 0) m] will
         return the first binding [k, v] of [m] where [Ord.compare k x >= 0]
@@ -216,9 +216,9 @@ module type S =
         @since 4.05 *)
 
     val find_last: (key -> bool) -> 'a t -> key * 'a
+    [@@alert exn "Not_found if no such key exists"]
     (** [find_last f m], where [f] is a monotonically decreasing function,
-        returns the binding of [m] with the highest key [k] such that [f k],
-        or raises [Not_found] if no such key exists.
+        returns the binding of [m] with the highest key [k] such that [f k].
         @since 4.05 *)
 
     val find_last_opt: (key -> bool) -> 'a t -> (key * 'a) option

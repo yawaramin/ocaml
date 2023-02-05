@@ -26,7 +26,7 @@ module Counting = struct
 type t = sem
 
 let make v =
-  if v < 0 then invalid_arg "Semaphore.Counting.init: wrong initial value";
+  if v < 0 then (invalid_arg[@alert "-exn"]) "Semaphore.Counting.init: wrong initial value";
   { mut = Mutex.create(); v; nonzero = Condition.create() }
 
 let release s =
@@ -37,7 +37,7 @@ let release s =
     Mutex.unlock s.mut
   end else begin
     Mutex.unlock s.mut;
-    raise (Sys_error "Semaphore.Counting.release: overflow")
+    (raise[@alert "-exn"]) (Sys_error "Semaphore.Counting.release: overflow")
   end
 
 let acquire s =

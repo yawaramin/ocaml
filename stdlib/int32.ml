@@ -47,6 +47,10 @@ let one = 1l
 let minus_one = -1l
 let succ n = add n 1l
 let pred n = sub n 1l
+
+(* Below polymorphic comparisons are safe *)
+[@@@alert "-exn"]
+
 let abs n = if n >= 0l then n else neg n
 let min_int = 0x80000000l
 let max_int = 0x7FFFFFFFl

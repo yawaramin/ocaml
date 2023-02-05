@@ -28,18 +28,19 @@
 (** {1 Exceptions} *)
 
 external raise : exn -> 'a = "%raise"
-(** Raise the given exception value *)
+[@@alert exn "exn"]
 
 external raise_notrace : exn -> 'a = "%raise_notrace"
-(** A faster version [raise] which does not record the backtrace.
-    @since 4.02
+[@@alert exn "exn"]
+(** A faster version of [raise] which does not record the backtrace.
+    @since 4.02.0
 *)
 
 val invalid_arg : string -> 'a
-(** Raise exception [Invalid_argument] with the given string. *)
+[@@alert exn "Invalid_argument with the given string"]
 
 val failwith : string -> 'a
-(** Raise exception [Failure] with the given string. *)
+[@@alert exn "Failure with the given string"]
 
 exception Exit
 (** The [Exit] exception is not raised by any library function.  It is
@@ -123,29 +124,34 @@ external ( = ) : 'a -> 'a -> bool = "%equal"
    Mutable structures (e.g. references and arrays) are equal
    if and only if their current contents are structurally equal,
    even if the two mutable objects are not the same physical object.
-   Equality between functional values raises [Invalid_argument].
    Equality between cyclic data structures may not terminate.
-   Left-associative operator, see {!Ocaml_operators} for more information. *)
+   Left-associative operator, see {!Ocaml_operators} for more information.
+
+   @raise Invalid_argument on equality between function values *)
 
 external ( <> ) : 'a -> 'a -> bool = "%notequal"
 (** Negation of {!Stdlib.( = )}.
     Left-associative operator, see {!Ocaml_operators} for more information.
-*)
+
+   @raise Invalid_argument on equality between function values *)
 
 external ( < ) : 'a -> 'a -> bool = "%lessthan"
 (** See {!Stdlib.( >= )}.
     Left-associative operator, see {!Ocaml_operators} for more information.
-*)
+
+   @raise Invalid_argument on equality between function values *)
 
 external ( > ) : 'a -> 'a -> bool = "%greaterthan"
 (** See {!Stdlib.( >= )}.
     Left-associative operator,  see {!Ocaml_operators} for more information.
-*)
+
+   @raise Invalid_argument on equality between function values *)
 
 external ( <= ) : 'a -> 'a -> bool = "%lessequal"
 (** See {!Stdlib.( >= )}.
     Left-associative operator,  see {!Ocaml_operators} for more information.
-*)
+
+   @raise Invalid_argument on equality between function values *)
 
 external ( >= ) : 'a -> 'a -> bool = "%greaterequal"
 (** Structural ordering functions. These functions coincide with
@@ -154,10 +160,10 @@ external ( >= ) : 'a -> 'a -> bool = "%greaterequal"
    total ordering over all types.
    The ordering is compatible with [( = )]. As in the case
    of [( = )], mutable structures are compared by contents.
-   Comparison between functional values raises [Invalid_argument].
    Comparison between cyclic structures may not terminate.
    Left-associative operator, see {!Ocaml_operators} for more information.
-*)
+
+   @raise Invalid_argument on equality between function values *)
 
 external compare : 'a -> 'a -> int = "%compare"
 (** [compare x y] returns [0] if [x] is equal to [y],
@@ -171,22 +177,27 @@ external compare : 'a -> 'a -> int = "%compare"
    other float value.  This treatment of [nan] ensures that [compare]
    defines a total ordering relation.
 
-   [compare] applied to functional values may raise [Invalid_argument].
    [compare] applied to cyclic structures may not terminate.
 
    The [compare] function can be used as the comparison function
    required by the {!Set.Make} and {!Map.Make} functors, as well as
-   the {!List.sort} and {!Array.sort} functions. *)
+   the {!List.sort} and {!Array.sort} functions.
+
+   @raise Invalid_argument on equality between function values *)
 
 val min : 'a -> 'a -> 'a
 (** Return the smaller of the two arguments.
     The result is unspecified if one of the arguments contains
-    the float value [nan]. *)
+    the float value [nan].
+
+   @raise Invalid_argument on equality between function values *)
 
 val max : 'a -> 'a -> 'a
 (** Return the greater of the two arguments.
     The result is unspecified if one of the arguments contains
-    the float value [nan]. *)
+    the float value [nan].
+
+   @raise Invalid_argument on equality between function values *)
 
 external ( == ) : 'a -> 'a -> bool = "%eq"
 (** [e1 == e2] tests for physical equality of [e1] and [e2].
@@ -348,26 +359,23 @@ external ( * ) : int -> int -> int = "%mulint"
 *)
 
 external ( / ) : int -> int -> int = "%divint"
+[@@alert exn "Division_by_zero if the second argument is 0"]
 (** Integer division.
    Integer division rounds the real quotient of its arguments towards zero.
    More precisely, if [x >= 0] and [y > 0], [x / y] is the greatest integer
    less than or equal to the real quotient of [x] by [y].  Moreover,
    [(- x) / y = x / (- y) = - (x / y)].
    Left-associative operator, see {!Ocaml_operators} for more information.
-
-   @raise Division_by_zero if the second argument is 0.
 *)
 
 external ( mod ) : int -> int -> int = "%modint"
+[@@alert exn "Division_by_zero [y] is 0"]
 (** Integer remainder.  If [y] is not zero, the result
    of [x mod y] satisfies the following properties:
    [x = (x / y) * y + x mod y] and
    [abs(x mod y) <= abs(y) - 1].
-   If [y = 0], [x mod y] raises [Division_by_zero].
    Note that [x mod y] is negative only if [x < 0].
    Left-associative operator, see {!Ocaml_operators} for more information.
-
-   @raise Division_by_zero if [y] is zero.
 *)
 
 val abs : int -> int
@@ -688,11 +696,9 @@ external classify_float : (float [@unboxed]) -> fpclass =
 *)
 
 val ( ^ ) : string -> string -> string
+[@@alert exn "Invalid_argument if the result is longer than {!Sys.max_string_length} bytes"]
 (** String concatenation.
     Right-associative operator, see {!Ocaml_operators} for more information.
-
-    @raise Invalid_argument if the result is longer then
-    than {!Sys.max_string_length} bytes.
 *)
 
 (** {1 Character operations}
@@ -704,9 +710,8 @@ external int_of_char : char -> int = "%identity"
 (** Return the ASCII code of the argument. *)
 
 val char_of_int : int -> char
-(** Return the character with the given ASCII code.
-   @raise Invalid_argument if the argument is
-   outside the range 0--255. *)
+[@@alert exn "Invalid_argument if the argument is outside the range 0--255"]
+(** Return the character with the given ASCII code. *)
 
 
 (** {1 Unit operations} *)
@@ -735,8 +740,8 @@ val bool_of_string_opt: string -> bool option
 *)
 
 val bool_of_string : string -> bool
-(** Same as {!Stdlib.bool_of_string_opt}, but raise
-   [Invalid_argument "bool_of_string"] instead of returning [None]. *)
+[@@alert exn {|Invalid_argument "bool_of_string" if string is not ["true"] or ["false"]|}]
+(** Same as {!Stdlib.bool_of_string_opt}, but raise an exception if parse fails. *)
 
 val string_of_int : int -> string
 (** Return the string representation of an integer, in decimal. *)
@@ -763,8 +768,8 @@ val int_of_string_opt: string -> int option
 *)
 
 external int_of_string : string -> int = "caml_int_of_string"
-(** Same as {!Stdlib.int_of_string_opt}, but raise
-   [Failure "int_of_string"] instead of returning [None]. *)
+[@@alert exn {|Failure "int_of_string" if parse fails|}]
+(** Same as {!Stdlib.int_of_string_opt}, but raise if parse fails. *)
 
 val string_of_float : float -> string
 (** Return a string representation of a floating-point number.
@@ -797,8 +802,8 @@ val float_of_string_opt: string -> float option
 *)
 
 external float_of_string : string -> float = "caml_float_of_string"
-(** Same as {!Stdlib.float_of_string_opt}, but raise
-   [Failure "float_of_string"] instead of returning [None]. *)
+[@@alert exn {|Failure "float_of_string" if parse fails|}]
+(** Same as {!Stdlib.float_of_string_opt}, but raise if parse fails. *)
 
 (** {1 Pair operations} *)
 
@@ -820,9 +825,7 @@ val ( @ ) : 'a list -> 'a list -> 'a list
   @since 5.1 this function is tail-recursive.
 *)
 
-(** {1 Input/output}
-    Note: all input/output functions can raise [Sys_error] when the system
-    calls they invoke fail. *)
+(** {1 Input/output} *)
 
 type in_channel
 (** The type of input channel. *)
@@ -843,29 +846,36 @@ val stderr : out_channel
 (** {2 Output functions on standard output} *)
 
 val print_char : char -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a character on standard output. *)
 
 val print_string : string -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a string on standard output. *)
 
 val print_bytes : bytes -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a byte sequence on standard output.
    @since 4.02 *)
 
 val print_int : int -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print an integer, in decimal, on standard output. *)
 
 val print_float : float -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a floating-point number, in decimal, on standard output.
 
     The conversion of the number to a string uses {!string_of_float} and
     can involve a loss of precision. *)
 
 val print_endline : string -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a string, followed by a newline character, on
    standard output and flush standard output. *)
 
 val print_newline : unit -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a newline character on standard output, and flush
    standard output. This can be used to simulate line
    buffering of standard output. *)
@@ -874,29 +884,36 @@ val print_newline : unit -> unit
 (** {2 Output functions on standard error} *)
 
 val prerr_char : char -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a character on standard error. *)
 
 val prerr_string : string -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a string on standard error. *)
 
 val prerr_bytes : bytes -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a byte sequence on standard error.
    @since 4.02 *)
 
 val prerr_int : int -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print an integer, in decimal, on standard error. *)
 
 val prerr_float : float -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a floating-point number, in decimal, on standard error.
 
     The conversion of the number to a string uses {!string_of_float} and
     can involve a loss of precision. *)
 
 val prerr_endline : string -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a string, followed by a newline character on standard
    error and flush standard error. *)
 
 val prerr_newline : unit -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Print a newline character on standard error, and flush
    standard error. *)
 
@@ -904,6 +921,7 @@ val prerr_newline : unit -> unit
 (** {2 Input functions on standard input} *)
 
 val read_line : unit -> string
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Flush standard output, then read characters from standard input
    until a newline character is encountered.
 
@@ -915,6 +933,7 @@ val read_line : unit -> string
 *)
 
 val read_int_opt: unit -> int option
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Flush standard output, then read one line from standard input
    and convert it to an integer.
 
@@ -923,10 +942,12 @@ val read_int_opt: unit -> int option
 *)
 
 val read_int : unit -> int
-(** Same as {!Stdlib.read_int_opt}, but raise [Failure "int_of_string"]
-   instead of returning [None]. *)
+[@@alert exn "Sys_error if system call invocation fails"]
+[@@alert exn {|Failure "int_of_string" if parse fails|}]
+(** Same as {!Stdlib.read_int_opt}, but raise if parse fails. *)
 
 val read_float_opt: unit -> float option
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Flush standard output, then read one line from standard input
    and convert it to a floating-point number.
 
@@ -936,8 +957,9 @@ val read_float_opt: unit -> float option
 *)
 
 val read_float : unit -> float
-(** Same as {!Stdlib.read_float_opt}, but raise [Failure "float_of_string"]
-   instead of returning [None]. *)
+[@@alert exn "Sys_error if system call invocation fails"]
+[@@alert exn {|Failure "float_of_string" if parse fails|}]
+(** Same as {!Stdlib.read_float_opt}, but raise if parse fails. *)
 
 
 (** {2 General output functions} *)
@@ -956,18 +978,21 @@ type open_flag =
   {!Stdlib.open_in_gen}. *)
 
 val open_out : string -> out_channel
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Open the named file for writing, and return a new output channel
    on that file, positioned at the beginning of the file. The
    file is truncated to zero length if it already exists. It
    is created if it does not already exists. *)
 
 val open_out_bin : string -> out_channel
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Same as {!Stdlib.open_out}, but the file is opened in binary mode,
    so that no translation takes place during writes. On operating
    systems that do not distinguish between text mode and binary
    mode, this function behaves like {!Stdlib.open_out}. *)
 
 val open_out_gen : open_flag list -> int -> string -> out_channel
+[@@alert exn "Sys_error if system call invocation fails"]
 (** [open_out_gen mode perm filename] opens the named file for writing,
    as described above. The extra argument [mode]
    specifies the opening mode. The extra argument [perm] specifies
@@ -985,32 +1010,39 @@ val flush_all : unit -> unit
 (** Flush all open output channels; ignore errors. *)
 
 val output_char : out_channel -> char -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Write the character on the given output channel. *)
 
 val output_string : out_channel -> string -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Write the string on the given output channel. *)
 
 val output_bytes : out_channel -> bytes -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Write the byte sequence on the given output channel.
    @since 4.02 *)
 
 val output : out_channel -> bytes -> int -> int -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** [output oc buf pos len] writes [len] characters from byte sequence [buf],
    starting at offset [pos], to the given output channel [oc].
    @raise Invalid_argument if [pos] and [len] do not
    designate a valid range of [buf]. *)
 
 val output_substring : out_channel -> string -> int -> int -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Same as [output] but take a string as argument instead of
    a byte sequence.
    @since 4.02 *)
 
 val output_byte : out_channel -> int -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Write one 8-bit integer (as the single character with that code)
    on the given output channel. The given integer is taken modulo
    256. *)
 
 val output_binary_int : out_channel -> int -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Write one integer in binary format (4 bytes, big-endian)
    on the given output channel.
    The given integer is taken modulo 2{^32}.
@@ -1019,6 +1051,7 @@ val output_binary_int : out_channel -> int -> unit
    all machines for a given version of OCaml. *)
 
 val output_value : out_channel -> 'a -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Write the representation of a structured value of any type
    to a channel. Circularities and sharing inside the value
    are detected and preserved. The object can be read back,
@@ -1027,12 +1060,14 @@ val output_value : out_channel -> 'a -> unit
    to {!Marshal.to_channel} with an empty list of flags. *)
 
 val seek_out : out_channel -> int -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** [seek_out chan pos] sets the current writing position to [pos]
    for channel [chan]. This works only for regular files. On
    files of other kinds (such as terminals, pipes and sockets),
    the behavior is unspecified. *)
 
 val pos_out : out_channel -> int
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Return the current writing position for the given channel.  Does
     not work on channels opened with the [Open_append] flag (returns
     unspecified results).
@@ -1044,11 +1079,13 @@ val pos_out : out_channel -> int
     opened in binary mode. *)
 
 val out_channel_length : out_channel -> int
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Return the size (number of characters) of the regular file
    on which the given channel is opened.  If the channel is opened
     on a file that is not a regular file, the result is meaningless. *)
 
 val close_out : out_channel -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Close the given channel, flushing all buffered write operations.
    Output functions raise a [Sys_error] exception when they are
    applied to a closed output channel, except [close_out] and [flush],
@@ -1060,6 +1097,7 @@ val close_out_noerr : out_channel -> unit
 (** Same as [close_out], but ignore all errors. *)
 
 val set_binary_mode_out : out_channel -> bool -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
 (** [set_binary_mode_out oc true] sets the channel [oc] to binary
    mode: no translations take place during output.
    [set_binary_mode_out oc false] sets the channel [oc] to text
@@ -1073,16 +1111,19 @@ val set_binary_mode_out : out_channel -> bool -> unit
 (** {2 General input functions} *)
 
 val open_in : string -> in_channel
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Open the named file for reading, and return a new input channel
    on that file, positioned at the beginning of the file. *)
 
 val open_in_bin : string -> in_channel
+[@@alert exn "Sys_error if system call invocation fails"]
 (** Same as {!Stdlib.open_in}, but the file is opened in binary mode,
    so that no translation takes place during reads. On operating
    systems that do not distinguish between text mode and binary
    mode, this function behaves like {!Stdlib.open_in}. *)
 
 val open_in_gen : open_flag list -> int -> string -> in_channel
+[@@alert exn "Sys_error if system call invocation fails"]
 (** [open_in_gen mode perm filename] opens the named file for reading,
    as described above. The extra arguments
    [mode] and [perm] specify the opening mode and file permissions.
@@ -1090,17 +1131,20 @@ val open_in_gen : open_flag list -> int -> string -> in_channel
    cases of this function. *)
 
 val input_char : in_channel -> char
-(** Read one character from the given input channel.
-   @raise End_of_file if there are no more characters to read. *)
+[@@alert exn "Sys_error if system call invocation fails"]
+[@@alert exn "End_of_file if there are no more characters to read"]
+(** Read one character from the given input channel. *)
 
 val input_line : in_channel -> string
+[@@alert exn "Sys_error if system call invocation fails"]
+[@@alert exn "End_of_file if the end of the file is reached at the beginning of line"]
 (** Read characters from the given input channel, until a
    newline character is encountered. Return the string of
-   all characters read, without the newline character at the end.
-   @raise End_of_file if the end of the file is reached
-   at the beginning of line. *)
+   all characters read, without the newline character at the end. *)
 
 val input : in_channel -> bytes -> int -> int -> int
+[@@alert exn "Sys_error if system call invocation fails"]
+[@@alert exn {|Invalid_argument "input" if [pos] and [len] do not designate a valid range of [buf]|}]
 (** [input ic buf pos len] reads up to [len] characters from
    the given channel [ic], storing them in byte sequence [buf], starting at
    character number [pos].
@@ -1113,23 +1157,20 @@ val input : in_channel -> bytes -> int -> int -> int
    the implementation found it convenient to do a partial read;
    [input] must be called again to read the remaining characters,
    if desired.  (See also {!Stdlib.really_input} for reading
-   exactly [len] characters.)
-   Exception [Invalid_argument "input"] is raised if [pos] and [len]
-   do not designate a valid range of [buf]. *)
+   exactly [len] characters.) *)
 
 val really_input : in_channel -> bytes -> int -> int -> unit
+[@@alert exn "Sys_error if system call invocation fails"]
+[@@alert exn "End_of_file if the end of file is reached before [len] characters have been read"]
+[@@alert exn "Invalid_argument if [pos] and [len] do not designate a valid range of [buf]"]
 (** [really_input ic buf pos len] reads [len] characters from channel [ic],
-   storing them in byte sequence [buf], starting at character number [pos].
-   @raise End_of_file if the end of file is reached before [len]
-   characters have been read.
-   @raise Invalid_argument if
-   [pos] and [len] do not designate a valid range of [buf]. *)
+   storing them in byte sequence [buf], starting at character number [pos]. *)
 
 val really_input_string : in_channel -> int -> string
+[@@alert exn "Sys_error if system call invocation fails"]
+[@@alert exn "End_of_file if the end of file is reached before [len] characters have been read"]
 (** [really_input_string ic len] reads [len] characters from channel [ic]
    and returns them in a new string.
-   @raise End_of_file if the end of file is reached before [len]
-   characters have been read.
    @since 4.02 *)
 
 val input_byte : in_channel -> int

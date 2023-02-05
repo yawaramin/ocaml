@@ -16,6 +16,7 @@
 let generic_quote quotequote s =
   let l = String.length s in
   let b = Buffer.create (l + 20) in
+  begin[@alert "-exn"]
   Buffer.add_char b '\'';
   for i = 0 to l - 1 do
     if s.[i] = '\''
@@ -24,6 +25,7 @@ let generic_quote quotequote s =
   done;
   Buffer.add_char b '\'';
   Buffer.contents b
+  end
 
 (* This function implements the Open Group specification found here:
   [[1]] http://pubs.opengroup.org/onlinepubs/9699919799/utilities/basename.html
@@ -33,7 +35,7 @@ let generic_quote quotequote s =
   Step 6 is not implemented: we consider that the [suffix] operand is
     always absent.  Suffixes are handled by [chop_suffix] and [chop_extension].
 *)
-let generic_basename is_dir_sep current_dir_name name =
+let generic_basename is_dir_sep current_dir_name name = begin[@alert "-exn"]
   let rec find_end n =
     if n < 0 then String.sub name 0 1
     else if is_dir_sep name n then find_end (n - 1)
@@ -46,12 +48,13 @@ let generic_basename is_dir_sep current_dir_name name =
   if name = ""
   then current_dir_name
   else find_end (String.length name - 1)
+end
 
 (* This function implements the Open Group specification found here:
   [[2]] http://pubs.opengroup.org/onlinepubs/9699919799/utilities/dirname.html
   In step 6 of [[2]], we choose to process "//" normally.
 *)
-let generic_dirname is_dir_sep current_dir_name name =
+let generic_dirname is_dir_sep current_dir_name name = begin[@alert "-exn"]
   let rec trailing_sep n =
     if n < 0 then String.sub name 0 1
     else if is_dir_sep name n then trailing_sep (n - 1)
@@ -68,6 +71,7 @@ let generic_dirname is_dir_sep current_dir_name name =
   if name = ""
   then current_dir_name
   else trailing_sep (String.length name - 1)
+end
 
 module type SYSDEPS = sig
   val null : string
@@ -95,16 +99,18 @@ module Unix : SYSDEPS = struct
   let dir_sep = "/"
   let is_dir_sep s i = s.[i] = '/'
   let is_relative n = String.length n < 1 || n.[0] <> '/'
-  let is_implicit n =
+  let is_implicit n = begin[@alert "-exn"]
     is_relative n
     && (String.length n < 2 || String.sub n 0 2 <> "./")
     && (String.length n < 3 || String.sub n 0 3 <> "../")
+  end
   let check_suffix name suff =
     String.ends_with ~suffix:suff name
 
   let chop_suffix_opt ~suffix filename =
-    let len_s = String.length suffix and len_f = String.length filename in
-    if len_f >= len_s then
+    let len_s = String.length suffix in
+    let len_f = String.length filename in
+    if[@alert "-exn"] len_f >= len_s then
       let r = String.sub filename (len_f - len_s) len_s in
       if r = suffix then
         Some (String.sub filename 0 (len_f - len_s))
@@ -114,15 +120,16 @@ module Unix : SYSDEPS = struct
       None
 
   let temp_dir_name =
-    try Sys.getenv "TMPDIR" with Not_found -> "/tmp"
+    try[@alert "-exn"] Sys.getenv "TMPDIR" with Not_found -> "/tmp"
   let quote = generic_quote "'\\''"
-  let quote_command cmd ?stdin ?stdout ?stderr args =
+  let quote_command cmd ?stdin ?stdout ?stderr args = begin[@alert "-exn"]
     String.concat " " (List.map quote (cmd :: args))
     ^ (match stdin  with None -> "" | Some f -> " <" ^ quote f)
     ^ (match stdout with None -> "" | Some f -> " >" ^ quote f)
     ^ (match stderr with None -> "" | Some f -> if stderr = stdout
                                                 then " 2>&1"
                                                 else " 2>" ^ quote f)
+  end
   let basename = generic_basename is_dir_sep current_dir_name
   let dirname = generic_dirname is_dir_sep current_dir_name
 end
@@ -132,26 +139,31 @@ module Win32 : SYSDEPS = struct
   let current_dir_name = "."
   let parent_dir_name = ".."
   let dir_sep = "\\"
-  let is_dir_sep s i = let c = s.[i] in c = '/' || c = '\\' || c = ':'
+  let is_dir_sep s i = match s.[i] with
+    | '/' | '\\' | ':' -> true
+    | _ -> false
   let is_relative n =
-    (String.length n < 1 || n.[0] <> '/')
-    && (String.length n < 1 || n.[0] <> '\\')
-    && (String.length n < 2 || n.[1] <> ':')
+    let len = String.length n in
+    (len < 1 || n.[0] <> '/')
+    && (len < 1 || n.[0] <> '\\')
+    && (len < 2 || n.[1] <> ':')
   let is_implicit n =
+    let len = String.length n in
     is_relative n
-    && (String.length n < 2 || String.sub n 0 2 <> "./")
-    && (String.length n < 2 || String.sub n 0 2 <> ".\\")
-    && (String.length n < 3 || String.sub n 0 3 <> "../")
-    && (String.length n < 3 || String.sub n 0 3 <> "..\\")
+    && (len < 2 || String.sub n 0 2 <> "./")
+    && (len < 2 || String.sub n 0 2 <> ".\\")
+    && (len < 3 || String.sub n 0 3 <> "../")
+    && (len < 3 || String.sub n 0 3 <> "..\\")
   let check_suffix name suff =
-   String.length name >= String.length suff &&
-   (let s = String.sub name (String.length name - String.length suff)
-                            (String.length suff) in
+    let name_len = String.length name in
+    let suff_len = String.length suff in
+    name_len >= suff_len &&
+    (let s = (String.sub[@alert "-exn"]) name (name_len - suff_len) suff_len in
     String.lowercase_ascii s = String.lowercase_ascii suff)
 
   let chop_suffix_opt ~suffix filename =
     let len_s = String.length suffix and len_f = String.length filename in
-    if len_f >= len_s then
+    if[@alert "-exn"] len_f >= len_s then
       let r = String.sub filename (len_f - len_s) len_s in
       if String.lowercase_ascii r = String.lowercase_ascii suffix then
         Some (String.sub filename 0 (len_f - len_s))
@@ -160,12 +172,12 @@ module Win32 : SYSDEPS = struct
     else
       None
 
-
   let temp_dir_name =
-    try Sys.getenv "TEMP" with Not_found -> "."
+    try[@alert "-exn"] Sys.getenv "TEMP" with Not_found -> "."
   let quote s =
     let l = String.length s in
     let b = Buffer.create (l + 20) in
+    begin[@alert "-exn"]
     Buffer.add_char b '\"';
     let rec loop i =
       if i = l then Buffer.add_char b '\"' else
@@ -187,6 +199,8 @@ module Win32 : SYSDEPS = struct
     in
     loop 0;
     Buffer.contents b
+    end
+
 (*
 Quoting commands for execution by cmd.exe is difficult.
 1- Each argument is first quoted using the "quote" function above, to
@@ -210,25 +224,28 @@ Quoting commands for execution by cmd.exe is difficult.
   let quote_cmd s =
     let b = Buffer.create (String.length s + 20) in
     String.iter
-      (fun c ->
-        match c with
+      (fun[@alert "-exn"] c ->
+        begin match c with
         | '(' | ')' | '!' | '^' | '%' | '\"' | '<' | '>' | '&' | '|' ->
-            Buffer.add_char b '^'; Buffer.add_char b c
+            Buffer.add_char b '^'
         | _ ->
-            Buffer.add_char b c)
+            ()
+        end;
+        Buffer.add_char b c)
       s;
     Buffer.contents b
+
   let quote_cmd_filename f =
-    if String.exists (function '\"' | '%' -> true | _ -> false) f then
+    if String.exists (function '\"' | '%' -> true | _ -> false) f then begin[@alert "-exn"]
       failwith ("Filename.quote_command: bad file name " ^ f)
-    else if String.contains f ' ' then
+    end else if String.contains f ' ' then
       String.concat "" ["\""; f; "\""]
     else
       f
   (* Redirections in cmd.exe: see https://ss64.com/nt/syntax-redirection.html
      and https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-xp/bb490982(v=technet.10)
   *)
-  let quote_command cmd ?stdin ?stdout ?stderr args =
+  let quote_command cmd ?stdin ?stdout ?stderr args = begin[@alert "-exn"]
     String.concat "" [
       "\"";
       quote_cmd_filename cmd;
@@ -242,20 +259,23 @@ Quoting commands for execution by cmd.exe is difficult.
                                         else " 2>" ^ quote_cmd_filename f);
       "\""
     ]
+  end
+
+  let is_letter = function
+    | 'A' .. 'Z' | 'a' .. 'z' -> true
+    | _ -> false
+
   let has_drive s =
-    let is_letter = function
-      | 'A' .. 'Z' | 'a' .. 'z' -> true
-      | _ -> false
-    in
     String.length s >= 2 && is_letter s.[0] && s.[1] = ':'
+
   let drive_and_path s =
     if has_drive s
-    then (String.sub s 0 2, String.sub s 2 (String.length s - 2))
+    then begin[@alert "-exn"] (String.sub s 0 2, String.sub s 2 (String.length s - 2)) end
     else ("", s)
   let dirname s =
     let (drive, path) = drive_and_path s in
     let dir = generic_dirname is_dir_sep current_dir_name path in
-    drive ^ dir
+    begin[@alert "-exn"] drive ^ dir end
   let basename s =
     let (_drive, path) = drive_and_path s in
     generic_basename is_dir_sep current_dir_name path
@@ -288,12 +308,12 @@ include Sysdeps
 
 let concat dirname filename =
   let l = String.length dirname in
-  if l = 0 || is_dir_sep dirname (l-1)
+  if[@alert "-exn"] l = 0 || is_dir_sep dirname (l-1)
   then dirname ^ filename
   else dirname ^ dir_sep ^ filename
 
 let chop_suffix name suff =
-  if check_suffix name suff
+  if[@alert "-exn"] check_suffix name suff
   then String.sub name 0 (String.length name - String.length suff)
   else invalid_arg "Filename.chop_suffix"
 
@@ -312,16 +332,16 @@ let extension_len name =
 
 let extension name =
   let l = extension_len name in
-  if l = 0 then "" else String.sub name (String.length name - l) l
+  if l = 0 then "" else (String.sub[@alert "-exn"]) name (String.length name - l) l
 
 let chop_extension name =
   let l = extension_len name in
-  if l = 0 then invalid_arg "Filename.chop_extension"
+  if[@alert "-exn"] l = 0 then invalid_arg "Filename.chop_extension"
   else String.sub name 0 (String.length name - l)
 
 let remove_extension name =
   let l = extension_len name in
-  if l = 0 then name else String.sub name 0 (String.length name - l)
+  if l = 0 then name else (String.sub[@alert "-exn"]) name 0 (String.length name - l)
 
 external open_desc: string -> open_flag list -> int -> int = "caml_sys_open"
 external close_desc: int -> unit = "caml_sys_close"
@@ -347,7 +367,7 @@ let temp_file ?(temp_dir = Domain.DLS.get current_temp_dir_name) prefix suffix =
       close_desc(open_desc name [Open_wronly; Open_creat; Open_excl] 0o600);
       name
     with Sys_error _ as e ->
-      if counter >= 20 then raise e else try_name (counter + 1)
+      if counter >= 20 then (raise[@alert "-exn"]) e else try_name (counter + 1)
   in try_name 0
 
 let open_temp_file ?(mode = [Open_text]) ?(perms = 0o600)
@@ -357,9 +377,9 @@ let open_temp_file ?(mode = [Open_text]) ?(perms = 0o600)
     let name = temp_file_name temp_dir prefix suffix in
     try
       (name,
-       open_out_gen (Open_wronly::Open_creat::Open_excl::mode) perms name)
+       (open_out_gen[@alert "-exn"]) (Open_wronly::Open_creat::Open_excl::mode) perms name)
     with Sys_error _ as e ->
-      if counter >= 20 then raise e else try_name (counter + 1)
+      if counter >= 20 then (raise[@alert "-exn"]) e else try_name (counter + 1)
   in try_name 0
 
 let temp_dir ?(temp_dir = Domain.DLS.get current_temp_dir_name)
@@ -367,8 +387,8 @@ let temp_dir ?(temp_dir = Domain.DLS.get current_temp_dir_name)
   let rec try_name counter =
     let name = temp_file_name temp_dir prefix suffix in
     try
-      Sys.mkdir name perms;
+      (Sys.mkdir[@alert "-exn"]) name perms;
       name
     with Sys_error _ as e ->
-      if counter >= 20 then raise e else try_name (counter + 1)
+      if counter >= 20 then (raise[@alert "-exn"]) e else try_name (counter + 1)
   in try_name 0

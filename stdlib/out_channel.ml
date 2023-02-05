@@ -49,17 +49,17 @@ let with_open_gen flags perm s f =
 let seek = Stdlib.LargeFile.seek_out
 let pos = Stdlib.LargeFile.pos_out
 let length = Stdlib.LargeFile.out_channel_length
-let close = Stdlib.close_out
+let close = Stdlib.close_out[@alert "-exn"]
 let close_noerr = Stdlib.close_out_noerr
 let flush = Stdlib.flush
 let flush_all = Stdlib.flush_all
-let output_char = Stdlib.output_char
-let output_byte = Stdlib.output_byte
-let output_string = Stdlib.output_string
-let output_bytes = Stdlib.output_bytes
-let output = Stdlib.output
-let output_substring = Stdlib.output_substring
-let set_binary_mode = Stdlib.set_binary_mode_out
+let output_char = Stdlib.output_char[@alert "-exn"]
+let output_byte = Stdlib.output_byte[@alert "-exn"]
+let output_string = Stdlib.output_string[@alert "-exn"]
+let output_bytes = Stdlib.output_bytes[@alert "-exn"]
+let output = Stdlib.output[@alert "-exn"]
+let output_substring = Stdlib.output_substring[@alert "-exn"]
+let set_binary_mode = Stdlib.set_binary_mode_out[@alert "-exn"]
 
 external set_buffered : t -> bool -> unit = "caml_ml_set_buffered"
 

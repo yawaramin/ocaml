@@ -18,7 +18,7 @@ type 'a t = 'a option = None | Some of 'a
 let none = None
 let some v = Some v
 let value o ~default = match o with Some v -> v | None -> default
-let get = function Some v -> v | None -> invalid_arg "option is None"
+let get = function Some v -> v | None -> (invalid_arg[@alert "-exn"]) "option is None"
 let bind o f = match o with None -> None | Some v -> f v
 let join = function Some o -> o | None -> None
 let map f o = match o with None -> None | Some v -> Some (f v)
