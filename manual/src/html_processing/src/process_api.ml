@@ -52,9 +52,50 @@ let parse_file ?(original=false) file =
       Hashtbl.add parsed_files file soup;
       soup
 
+let drop n str = String.sub str n (String.length str - n)
+
+let index_of name toc items drop_chars =
+  if Vector.length items = 0 then () else
+  let items = Vector.to_array items
+  and idx_title = create_element ~class_:"toc_title" ~inner_text:name "div"
+  and idx_ul = create_element "ul" in
+  Array.sort String.compare items;
+  items |> Array.iter (fun span_id ->
+    let inner_text = drop drop_chars span_id in
+    let idx_a = create_element ~attributes:["href", "#" ^ span_id] ~inner_text "a"
+    and idx_li = create_element "li" in
+    append_child idx_li idx_a;
+    append_child idx_ul idx_li);
+  append_child toc idx_title;
+  append_child toc idx_ul
+
+let append_idx toc body =
+  let types = Vector.create ""
+  and vals = Vector.create ""
+  and modules = Vector.create ""
+  and module_types = Vector.create "" in
+  body
+  |> select "span[id]"
+  |> iter (fun span_with_id ->
+    let span_id = require (id span_with_id) in
+    if String.starts_with ~prefix:"VAL" span_id then
+      Vector.push vals span_id
+    else if String.starts_with ~prefix:"TYPEELT" span_id then
+      ()
+    else if String.starts_with ~prefix:"TYPE" span_id then
+      Vector.push types span_id
+    else if String.starts_with ~prefix:"MODULETYPE" span_id then
+      Vector.push module_types span_id
+    else if String.starts_with ~prefix:"MODULE" span_id then
+      Vector.push modules span_id);
+  index_of "MODULE TYPES" toc module_types 10;
+  index_of "MODULES" toc modules 6;
+  index_of "TYPES" toc types 4;
+  index_of "VALUES" toc vals 3
+
 (* Create TOC with H2 and H3 elements *)
 (* Cf Scanf for an example with H3 elements *)
-let make_toc ~version ~search file config title body =
+let make_toc ~version ~search config body =
   let header = create_element ~id:"sidebar" "header" in
   prepend_child body header;
   let nav = create_element "nav" ~class_:"toc" in
@@ -91,12 +132,7 @@ let make_toc ~version ~search file config title body =
       | _ -> li_current, h3_current) (create_element "li", None);
   |> ignore;
 
-  let href = let base = Filename.basename file in
-    if String.sub base 0 5 = "type_"
-    then String.sub base 5 (String.length base - 5) else "#top" in
-  let a = create_element "a" ~inner_text:title ~attributes:["href", href] in
-  let div = create_element ~class_:"toc_title" "div" in
-  append_child div a;
+  let div = create_element ~class_:"toc_title" ~inner_text:"CONTENTS" "div" in
   prepend_child nav div;
 
   (* In case of indexlist, add it to TOC *)
@@ -123,6 +159,9 @@ let make_toc ~version ~search file config title body =
   (* Add sidebar button for mobile navigation *)
   add_sidebar_button body;
 
+  (* Add the index of types/values/etc. *)
+  append_idx nav body;
+
   (* Add logo *)
   prepend_child header (logo_html
                           ((if config.title = "" then "" else "../") ^
@@ -145,8 +184,7 @@ let process ?(search=true) ~version config file out =
   |> Option.iter delete;
 
   (* Add left sidebar with TOC *)
-  let title = soup $ "title" |> R.leaf_text in
-  make_toc ~version ~search file config title body;
+  make_toc ~version ~search config body;
 
   dbg "Saving %s..." out;
 

@@ -5,7 +5,7 @@
 
 (executable
  (name process_api)
- (modules process_api)
+ (modules vector process_api)
  (libraries unix re lambdasoup common))
 
 (executable

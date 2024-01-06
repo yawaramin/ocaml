@@ -660,9 +660,10 @@
     .toc_title
     {
 	display: block;
-	/*content: "Contents";*/
-	/* text-transform: uppercase; */
-	margin: 1.414em 0 0.5em;  
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(20px);
+  padding: 10px;
     }
 
     .toc_title a {
